@@ -10,11 +10,7 @@ import java.util.Scanner;
  * To change this template use File | Settings | File Templates.
  */
 public class EaTester {
-
-
-
     public static void main(String[] args) throws IOException {
-
         /**
          * Initialize necessary variables
          */
@@ -88,20 +84,20 @@ public class EaTester {
             counter++;
         }
 
-        //ASSIGNMENT 1C CRAP
+        //ASSIGNMENT 1D CRAP
 
         //Create a Graph
         EaGraph eaGraph = new EaGraph();
         eaGraph.readFromFile(graphFile);
 
         //Create an instance of the MinCutAlgorithm
-        MinCutAlgorithmTwoClass minCutAlgorithmTwoClass = new MinCutAlgorithmTwoClass(numberOfRuns,randomSeed,
+        MinCutAlgorithmFourClass minCutAlgorithmFourClass = new MinCutAlgorithmFourClass(numberOfRuns,randomSeed,
                                 numOfEvals,solutionFile,logFile,populationSize,numChildren,numParents,kSelection,kSurvival,
                                 nCrossPoint,nTermination,eaGraph.getSize(),bitFlipProb,selectionAlg,recombAlg,survivorAlg,
                                 fitnessFunction,survivorStrat,penaltyScalar);
 
         //perform the mincut Algorithm
-        minCutAlgorithmTwoClass.minCutAlgorithmTwo(eaGraph,graphFile.getName());
+        minCutAlgorithmFourClass.minCutAlgorithmTwo(eaGraph,graphFile.getName());
 
         System.out.println("finished");
 
