@@ -95,7 +95,7 @@ public class MinCutAlgorithmFourClass {
         outLog.write("Surivivor Selection Alg: " + survivorAlg + "\r\n");
         outLog.write("Fitness Function: " + fitnessFunction + "\r\n");
         outLog.write("Result Log"+"\r\n");
-        for(int i = 0; i<numberOfRuns; i++){
+        for(int i = 0; i<1; i++){
             //Generate Initial Population
             ArrayList<MemberNode> population = new ArrayList<MemberNode>();
 
@@ -109,53 +109,71 @@ public class MinCutAlgorithmFourClass {
                 population.get(j).setFitnessValueAndNumDem(population.get(j).getBitString(),graph,fitnessFunction,
                 (double)penaltyScalar);
             }
+            assignLevelOfNonDomAndSort(population);
 
-            //Sort Initial population on the basis of non-domination
             for(int j = 0; j<numberOfEvals; j++){
+                //Select Parents
+                ArrayList<MemberNode> mating_pool = new ArrayList<MemberNode>();
+                if(selectionAlg.equals("Tournament")){
+                    kParentNonDomTournamentSelection(mating_pool,population);
+                }else if(selectionAlg.equals("TournamentNo")){
+                    kParentNonDomTournamentSelectionNo(mating_pool, population);
+                }else if(selectionAlg.equals("UniformRandom")){
+                    kRandomParentSelection(mating_pool,population);
+                }
+
+                //Create Children
+                ArrayList<MemberNode> spawningPool = new ArrayList<MemberNode>();
+                if(ReproductionAlg.equals("Uniform")){
+                    UniformCrossover(mating_pool,spawningPool);
+                }else if(ReproductionAlg.equals("nPoint")){
+                    nPointCrossOver(spawningPool,mating_pool);
+                }
+
+                //Mutate Offspring
+                bitFlipMutation(spawningPool);
+
+                //Assign fitness Value to children
+                for(int k = 0; k<spawningPool.size(); k++){
+                    spawningPool.get(j).setFitnessValueAndNumDem(spawningPool.get(j).getBitString(),graph,fitnessFunction,
+                          (double)penaltyScalar);
+                }
+                //Combine Population + Children
+
+                population.addAll(spawningPool);
+                assignLevelOfNonDomAndSort(population);
+
+                //Survival Selection
+                ArrayList<MemberNode> nextGeneration = new ArrayList<MemberNode>();
+                if(survivorAlg.equals("UniformRandom")){
+                    randomSurvival(population);
+
+                }else if(survivorAlg.equals("Tournament")){
+                    kSurvivalNonDomTournamentSelection(population,nextGeneration);
+
+                }else if(survivorAlg.equals("TournamentNo")){
+                    kSurivalNonDomTournamentSelectionNo(population,nextGeneration);
+                }
+                assignLevelOfNonDomAndSort(population);
 
             }
-            //Sort Inital popl
+
         }
     }
 
-
-
-
-    private void kParentTournamentSelectionNo(ArrayList<MemberNode> mating_pool, ArrayList<MemberNode> population) {
+    private void kParentNonDomTournamentSelectionNo(ArrayList<MemberNode> mating_pool, ArrayList<MemberNode> population) {
         int parentCounter = 0;
         while(parentCounter<numParents){
-            ArrayList<MemberNode> tempPop = new ArrayList<MemberNode>();
-            ArrayList<Integer> tempIndexPop = new ArrayList<Integer>();
-            for(int i = 0; i<kParent; i++){
-                int index = randomValue.nextInt(population.size());
-                while(population.get(index).isBeenParentSelected()){
-                    index = randomValue.nextInt(population.size());
-                }
-                tempPop.add(population.get(randomValue.nextInt(population.size())));
-                tempIndexPop.add(index);
-            }
 
-            int current_best = 0;
-            for(int i = 0; i<tempPop.size(); i++){
-                if(tempPop.get(current_best).getFitnessValue()>tempPop.get(i).getFitnessValue()){
-                    current_best = i;
-                }
-            }
-
-            if((double)randomValue.nextInt(population.size())<(0.6)*((double)population.size())){
-                mating_pool.add(tempPop.get(current_best));
-            }else{
-                int index = randomValue.nextInt(tempPop.size());
-                while(index==current_best){
-                    index= randomValue.nextInt(tempPop.size());
-                }
-                mating_pool.add(tempPop.get(index));
-                population.get(tempIndexPop.get(index)).setBeenParentSelected(true);
-            }
-            parentCounter++;
         }
 
     }
+
+
+    private void kParentNonDomTournamentSelection(ArrayList<MemberNode> mating_pool,ArrayList<MemberNode> population){
+
+    }
+
 
     private void kRandomParentSelection(ArrayList<MemberNode> mating_pool, ArrayList<MemberNode> population) {
 
@@ -253,101 +271,6 @@ public class MinCutAlgorithmFourClass {
         return fitnessValueSum/population.size();
     }
 
-    private double getFitnessValue(ArrayList<Boolean> bitString,EaGraph graph) {
-        double fitnessValue = 0.000000;
-
-        if(fitnessFunction.equals("Original")){
-            int numEdgesCut = 0;
-            //look for cuts
-
-            for(int m=1; m<graph.getEdgeList().size(); m++){
-                if(cutChecker(graph.getEdgeList().get(m).getxVertex(),
-                        graph.getEdgeList().get(m).getyVertex(),bitString)){
-                    //increment the number of edges cut
-                    numEdgesCut++;
-
-                }
-            }
-
-            int s1counter = 0;
-            int s2counter = 0;
-            for(int j = 1; j<bitString.size(); j++){
-
-                if(bitString.get(j)==false){
-                    s1counter++;
-                }else if(bitString.get(j)==true){
-                    s2counter++;
-                }
-            }
-
-            if(numEdgesCut>0){
-                double edgesCut = (double)numEdgesCut;
-                double s1count = (double)s1counter;
-                double s2count = (double)s2counter;
-                double minCutRatio;
-
-                //finds the minCutRatio
-                minCutRatio = ((edgesCut)/(Math.min(s2count,s1count)));
-
-                fitnessValue = minCutRatio;
-            }
-
-
-        }else if(fitnessFunction.equals("Constraint")){
-            int numEdgesCut = 0;
-            //look for cuts
-
-            for(int m=1; m<graph.getEdgeList().size(); m++){
-                if(cutChecker(graph.getEdgeList().get(m).getxVertex(),
-                        graph.getEdgeList().get(m).getyVertex(),bitString)){
-                    //increment the number of edges cut
-                    numEdgesCut++;
-
-                }
-            }
-
-            int s1counter = 0;
-            int s2counter = 0;
-            for(int j = 1; j<bitString.size(); j++){
-
-                if(bitString.get(j)==false){
-                    s1counter++;
-                }else if(bitString.get(j)==true){
-                    s2counter++;
-                }
-            }
-
-            if(numEdgesCut>0){
-                double edgesCut = (double)numEdgesCut;
-                double s1count = (double)s1counter;
-                double s2count = (double)s2counter;
-                double minCutRatio;
-
-                //finds the minCutRatio
-                minCutRatio = ((edgesCut)/(Math.min(s2count,s1count)));
-
-                fitnessValue = minCutRatio;
-
-
-            }
-
-            //Different graph that makes use of an adjacency list rather than an edgelist
-            Graph graph1 = new Graph(graph.getEdgeList(),graph.getSize());
-            graph1.buildAdjList(bitString);
-            //We get the amount of graphs that are in existance after the cuts have been made
-            int graphCount = graph1.graphCount();
-            double penalty = ((double)penaltyScalar);
-            if(graphCount>2){
-                //If we have a graphCount of 2, then it is optimal, so no need for a penalty,
-                //but if we have more than 2 we assign a penalty equal to the penaltyscalar x graphCount
-                fitnessValue = fitnessValue + penalty*((double)graphCount);
-            }
-
-        }
-        return fitnessValue;
-
-    }
-
     public ArrayList<Boolean> getBitStrings(int size){
         ArrayList<Boolean> bitSet = new ArrayList<Boolean>();
         for(int i = 0; i<size+1; i++){
@@ -361,165 +284,14 @@ public class MinCutAlgorithmFourClass {
         return bitSet;
     }
 
-    private boolean cutChecker(Integer s1, Integer s2,ArrayList<Boolean> bitSet){
-
-        if(bitSet.get(s1)!=bitSet.get(s2)){
-            return true;
-        }
-        return false;
-
-    }
-
     private void kParentTournamentSelection(ArrayList<MemberNode> possibleParentPop, ArrayList<MemberNode> population){
-        int parentCounter = 0;
-        while(parentCounter<numParents){
-            ArrayList<MemberNode> tempPop = new ArrayList<MemberNode>();
-            for(int i = 0; i<kParent; i++){
-                tempPop.add(population.get(randomValue.nextInt(population.size())));
-            }
-
-            int current_best = 0;
-            for(int i = 0; i<tempPop.size(); i++){
-                if(tempPop.get(current_best).getFitnessValue()>tempPop.get(i).getFitnessValue()){
-                    current_best = i;
-                }
-            }
-
-            if((double)randomValue.nextInt(population.size())<(0.6)*((double)population.size())){
-                possibleParentPop.add(tempPop.get(current_best));
-            }else{
-                int index = randomValue.nextInt(tempPop.size());
-                while(index==current_best){
-                    index= randomValue.nextInt(tempPop.size());
-                }
-                possibleParentPop.add(tempPop.get(index));
-            }
-            parentCounter++;
-        }
     }
 
-    private void fitnessProportionalSelection(ArrayList<MemberNode> population, ArrayList<MemberNode> parents){
-        //WE are going to sort the population based on fitness
-        ArrayList<MemberNode> nextGen = new ArrayList<MemberNode>();
-        //find best index
-        while(nextGen.size()<((0.6)*(double)populationSize)){
-            int current_best = 0;
-            for(int i = 0; i<population.size(); i++){
-                if(population.get(current_best).getFitnessValue()>population.get(i).getFitnessValue()){
-                    current_best = i;
-                }
-            }
-
-            nextGen.add(population.get(current_best));
-            population.remove(current_best);
-        }
-
-        ArrayList<Integer> indices = new ArrayList<Integer>();
-        //split the top 20% of the population into the 60% fitness proportion, and the rest
-        //into the bottom 40%
-
-        for(int i = 0; i<numParents; i++){
-            Integer proportionSelection = randomValue.nextInt(100);
-            if(proportionSelection <= 70){
-
-                Integer randomIndex = randomValue.nextInt(nextGen.size());
-                while(isAlreadyPicked(indices,randomIndex)){
-                    randomIndex = randomValue.nextInt(nextGen.size());
-                }
-                indices.add(randomIndex);
-                parents.add(nextGen.get(randomIndex));
-            }else{
-                Integer randIndex = randomValue.nextInt(population.size());
-                parents.add(population.get(randIndex));
-            }
-
-        }
-
-        population.addAll(nextGen);
+    private void kSurivalNonDomTournamentSelectionNo(ArrayList<MemberNode> population, ArrayList<MemberNode> nextGeneration){
     }
 
-    private void fitnessProportionalSurvivalSelection(ArrayList<MemberNode> population){
-        //WE are going to sort the population based on fitness
-        ArrayList<MemberNode> nextGen = new ArrayList<MemberNode>();
-        ArrayList<MemberNode> survivors = new ArrayList<MemberNode>();
-        //find best index
-        while(nextGen.size()<((0.6)*(double)populationSize)){
-            int current_best = 0;
-            for(int i = 0; i<population.size(); i++){
-                if(population.get(current_best).getFitnessValue()>population.get(i).getFitnessValue()){
-                    current_best = i;
-                }
-            }
+    private void kSurvivalNonDomTournamentSelection(ArrayList<MemberNode> population,ArrayList<MemberNode> nextGeneration) {
 
-            nextGen.add(population.get(current_best));
-            population.remove(current_best);
-        }
-
-        ArrayList<Integer> indices = new ArrayList<Integer>();
-        //split the top 20% of the population into the 60% fitness proportion, and the rest
-        //into the bottom 40%
-
-        while(survivors.size()<populationSize){
-            Integer proportionSelection = randomValue.nextInt(100);
-            if(proportionSelection <= 70){
-
-                Integer randomIndex = randomValue.nextInt(nextGen.size());
-                indices.add(randomIndex);
-                survivors.add(nextGen.get(randomIndex));
-            }else{
-                Integer randIndex = randomValue.nextInt(population.size());
-                survivors.add(population.get(randIndex));
-            }
-
-        }
-        population.clear();
-        population.addAll(survivors);
-    }
-
-    private void kSurivalTournamentSelection(ArrayList<MemberNode> population){
-        //Pick 4 random indices
-        while(population.size()>populationSize){
-            ArrayList<Integer> indices = new ArrayList<Integer>();
-            for(int i = 0; i<kSurvival; i++){
-                int random =randomValue.nextInt(population.size());
-                while(isAlreadyPicked(indices,random)){
-                    random =randomValue.nextInt(population.size());
-                }
-            }
-            //Find worst of 4 and kill it
-            int killIndex = 0;
-            int counter = 0;
-            while(counter<indices.size()){
-                if(population.get(indices.get(killIndex)).getFitnessValue()<population.get(indices.get(counter)).getFitnessValue()){
-                    killIndex = counter;
-                }
-                counter++;
-            }
-
-            population.remove(killIndex);
-        }
-    }
-
-    private void kSurvivalTournamentSelectionR(ArrayList<MemberNode> population,ArrayList<MemberNode> nextGeneration) {
-        while(nextGeneration.size()<populationSize){
-            ArrayList<Integer> indices = new ArrayList<Integer>();
-            for(int i = 0; i<kSurvival; i++){
-                int random =randomValue.nextInt(population.size());
-                while(isAlreadyPicked(indices,random)){
-                    random =randomValue.nextInt(population.size());
-                }
-            }
-            int survivor = 0;
-            int counter = 0;
-            while(counter<indices.size()){
-                if(population.get(indices.get(survivor)).getFitnessValue()>population.get(indices.get(counter)).getFitnessValue()){
-                    survivor = counter;
-                }
-                counter++;
-            }
-            nextGeneration.add(population.get(survivor));
-
-        }
     }
 
     private boolean isAlreadyPicked(int index, ArrayList<MemberNode> population) {
@@ -641,6 +413,70 @@ public class MinCutAlgorithmFourClass {
         return  false;
     }
 
+    private void assignLevelOfNonDomAndSort(ArrayList<MemberNode> sortingPopulation){
+        //AssignLevel of NonDomination
+        //The more members of the population this dominates, the higher
+        //level of non-domination
+        for(int i =0 ;i <sortingPopulation.size(); i++){
+            int nonDomCount = 0;
+            for(int j = 0; j<sortingPopulation.size(); j++){
+                if(dominates(sortingPopulation.get(i), sortingPopulation.get(j))){
+                    ++nonDomCount;
+                }
+            }
+            sortingPopulation.get(i).setNonDomCount(nonDomCount);
+        }
+
+        //Sort
+        mergeSort(sortingPopulation,0,sortingPopulation.size()-1);
+
+        //Assign Levels based on index in population after sort
+        for(int i=0; i<sortingPopulation.size(); i++){
+            sortingPopulation.get(i).setNonDomLevel(i+1);
+        }
+
+
+
+    }
+
+    private boolean dominates(MemberNode memberNode, MemberNode memberNode1) {
+
+        if(memberNode.getMinNumerator()<memberNode1.getMinNumerator()){
+            if(memberNode.getMaxDenominator()>memberNode1.getMaxDenominator()){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void mergeSort(ArrayList<MemberNode> sortingPopulation, int lo,int n){
+        int low = lo;
+        int high = n;
+        if(low >= high){
+            return;
+        }
+
+        int middle = (low + high)/2;
+        mergeSort(sortingPopulation,low,middle);
+        mergeSort(sortingPopulation,middle+1,high);
+        int end_low = middle;
+        int start_high = middle+1;
+        while((lo <= end_low)&&(start_high<=high)){
+            if(sortingPopulation.get(low).getNonDomCount()>sortingPopulation.get(start_high).getNonDomCount()){
+                low++;
+            }else{
+                MemberNode temp = sortingPopulation.get(start_high);
+                for(int k = start_high-1; k>=low; k--){
+                    sortingPopulation.set(k+1,sortingPopulation.get(k));
+                }
+                sortingPopulation.set(low,temp);
+                low++;
+                end_low++;
+                start_high++;
+            }
+        }
+
+    }
 
 
     /**

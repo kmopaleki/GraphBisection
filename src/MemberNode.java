@@ -14,6 +14,8 @@ public class MemberNode {
     private boolean beenParentSelected;
     private int minNumerator;
     private int maxDenominator;
+    private int nonDomCount;
+    private int nonDomLevel;
 
     public MemberNode() {
         this.bitString = new ArrayList<Boolean>();
@@ -40,6 +42,38 @@ public class MemberNode {
         this.beenParentSelected = false;
     }
 
+    public MemberNode(Double fitnessValue, int minNumerator,
+                      int maxDenominator, int nonDomCount,
+                      ArrayList<Boolean> bitString) {
+        this.fitnessValue = fitnessValue;
+        this.minNumerator = minNumerator;
+        this.maxDenominator = maxDenominator;
+        this.nonDomCount = nonDomCount;
+        this.bitString = bitString;
+    }
+
+    public MemberNode(ArrayList<Boolean> bitString, Double fitnessValue,
+                      int minNumerator, int maxDenominator,
+                      int nonDomCount, int nonDomLevel) {
+        this.bitString = bitString;
+        this.fitnessValue = fitnessValue;
+        this.minNumerator = minNumerator;
+        this.maxDenominator = maxDenominator;
+        this.nonDomCount = nonDomCount;
+        this.nonDomLevel = nonDomLevel;
+    }
+
+    public MemberNode(ArrayList<Boolean> bitString, Double fitnessValue,
+                      boolean beenSelectedSon, boolean beenParentSelected,
+                      int minNumerator, int maxDenominator, int nonDomCount) {
+        this.bitString = bitString;
+        this.fitnessValue = fitnessValue;
+        this.beenSelectedSon = beenSelectedSon;
+        this.beenParentSelected = beenParentSelected;
+        this.minNumerator = minNumerator;
+        this.maxDenominator = maxDenominator;
+        this.nonDomCount = nonDomCount;
+    }
     public double getFitnessValue() {
         return fitnessValue;
     }
@@ -80,6 +114,38 @@ public class MemberNode {
         this.fitnessValue = fitnessValue;
     }
 
+    public int getMinNumerator() {
+        return minNumerator;
+    }
+
+    public void setMinNumerator(int minNumerator) {
+        this.minNumerator = minNumerator;
+    }
+
+    public int getMaxDenominator() {
+        return maxDenominator;
+    }
+
+    public void setMaxDenominator(int maxDenominator) {
+        this.maxDenominator = maxDenominator;
+    }
+
+    public int getNonDomCount() {
+        return nonDomCount;
+    }
+
+    public void setNonDomCount(int nonDomCount) {
+        this.nonDomCount = nonDomCount;
+    }
+
+    public int getNonDomLevel() {
+        return nonDomLevel;
+    }
+
+    public void setNonDomLevel(int nonDomLevel) {
+        this.nonDomLevel = nonDomLevel;
+    }
+
     private boolean cutChecker(Integer s1, Integer s2,ArrayList<Boolean> bitSet){
 
         if(bitSet.get(s1)!=bitSet.get(s2)){
@@ -91,7 +157,8 @@ public class MemberNode {
 
     public void setFitnessValueAndNumDem(ArrayList<Boolean> bitString, EaGraph graph,String fitnessFunction,Double penaltyScalar) {
 
-
+        this.nonDomCount = 0;
+        this.nonDomLevel = 99999;
         if(fitnessFunction.equals("Original")){
             int numEdgesCut = 0;
             //look for cuts
@@ -104,6 +171,7 @@ public class MemberNode {
 
                 }
             }
+            this.minNumerator = numEdgesCut;
 
             int s1counter = 0;
             int s2counter = 0;
@@ -115,6 +183,8 @@ public class MemberNode {
                     s2counter++;
                 }
             }
+
+            this.maxDenominator = Math.min(s1counter,s2counter);
 
             if(numEdgesCut>0){
                 double edgesCut = (double)numEdgesCut;
