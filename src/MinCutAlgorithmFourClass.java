@@ -70,8 +70,7 @@ public class MinCutAlgorithmFourClass {
         this.penaltyScalar = penaltyScalar;
     }
 
-    public void minCutAlgorithmTwo(EaGraph graph,String dataFileName) throws IOException {
-
+    public void NSGA(EaGraph graph, String dataFileName)throws IOException{
         ArrayList<MemberNode> bestSolutionArrayList = new ArrayList<MemberNode>();
         FileWriter theLogFile = new FileWriter(logFile,true);
         FileWriter theSolutionFile = new FileWriter(solutionFile,true);
@@ -96,126 +95,27 @@ public class MinCutAlgorithmFourClass {
         outLog.write("Surivivor Selection Alg: " + survivorAlg + "\r\n");
         outLog.write("Fitness Function: " + fitnessFunction + "\r\n");
         outLog.write("Result Log"+"\r\n");
-
-        double localbest = 0.000;
-        double localaverage = 0.0000;
-
-
         for(int i = 0; i<numberOfRuns; i++){
-            //INITIALIZE THE POPULATION
+            //Generate Initial Population
             ArrayList<MemberNode> population = new ArrayList<MemberNode>();
-            int childcounter = populationSize;
 
-            for(int j = 0; j<populationSize; j++){
+            for(int k = 0; k<populationSize; k++){
                 ArrayList<Boolean> bitSet = getBitStrings(numVertices);
                 population.add(new MemberNode(bitSet,false));
             }
 
-            //EVALUATE INITIAL POPULATION
-            for(int j = 0; j<populationSize; j++ ){
-                population.get(j).setFitnessValue(getFitnessValue(population.get(j).getBitString(),graph));
+            //Calculate Fitness Level for each member of the population
+            for(int j = 0; j<populationSize;j++){
+                population.get(j).setFitnessValueAndNumDem(population.get(j).getBitString(),graph,fitnessFunction,
+                (double)penaltyScalar);
             }
 
-            int evalCounter = 0;
-            int termCounter = 0;
-            double prevLocalBest = 0.0000;
-            double currentLocalBest;
-            outLog.write("Run #: " + (i+1)+"\r\n");
-            while(evalCounter<numberOfEvals&&!termCondition(termCounter)){
-                System.out.println("Run #" + i + "Eval # " + evalCounter);
-                ArrayList<MemberNode> mating_pool = new ArrayList<MemberNode>();
-                ArrayList<MemberNode> spawning_pool = new ArrayList<MemberNode>();
-                //SELECT PARENTS
-                if(selectionAlg.equals("Tournament")){
-                    kParentTournamentSelection(mating_pool, population);
-                }else if(selectionAlg.equals("TournmanentNo")){
-                    kParentTournamentSelectionNo(mating_pool,population);
-                }else if(selectionAlg.equals("Proportion")){
-                    fitnessProportionalSelection(population,mating_pool);
-                }else if(selectionAlg.equals("UniformRandom")){
-                    kRandomParentSelection(mating_pool,population);
-                }
+            //Sort Initial population on the basis of non-domination
+            for(int j = 0; j<numberOfEvals; j++){
 
-                //RECOMBINATION
-                if(ReproductionAlg.equals("Uniform")){
-                    UniformCrossover(mating_pool,spawning_pool);
-
-                }else if(ReproductionAlg.equals("nPoint")){
-                    nPointCrossOver(spawning_pool,mating_pool);
-
-                }
-
-                //MUTATE
-                bitFlipMutation(spawning_pool);
-
-                //EVALUATE NEW KIDS
-                for(int k = 0; k<spawning_pool.size(); k++){
-                    spawning_pool.get(k).setFitnessValue(getFitnessValue(spawning_pool.get(k).getBitString(),graph));
-                }
-
-
-                //SURVIVAL SELECTION
-                if(survivorStrat.equals("Plus")){
-                    population.addAll(spawning_pool);
-                }else if(survivorStrat.equals("Comma")){
-                    population.clear();
-                    population.addAll(spawning_pool);
-
-                    //now we need to make sure that the population size is still 200
-                    //so we duplicate children to fill it up.
-                    while(population.size()<populationSize){
-                        int randomIndex = randomValue.nextInt(population.size());
-                        MemberNode newMember = new MemberNode(population.get(randomIndex).getBitString(),population.get(randomIndex).getFitnessValue());
-                        population.add(newMember);
-                    }
-
-                }
-
-
-
-                if(survivorAlg.equals("Tournament")){
-                    kSurivalTournamentSelection(population);
-                }else if(survivorAlg.equals("Truncation")){
-                    truncation(population);
-                }else if(survivorAlg.equals("UniformRandom")){
-                    randomSurvival(population);
-                }else if(survivorAlg.equals("Proportional")){
-                    fitnessProportionalSurvivalSelection(population);
-                }else if(survivorAlg.equals("TournamentR")){
-                    ArrayList<MemberNode> survivors = new ArrayList<MemberNode>();
-                    kSurvivalTournamentSelectionR(population,survivors);
-                    population.clear();
-                    population.addAll(survivors);
-
-                }
-
-                if(evalCounter%numChildren==0){
-                    localbest = getBestFitness(population);
-                    localaverage = getAverageFitness(population);
-                    outLog.write(childcounter + "\t" + (-1)*localaverage + "\t" + (-1)*localbest + "\r\n");
-                    childcounter = childcounter + numChildren;
-
-                }
-                currentLocalBest = getBestFitness(population);
-                if(currentLocalBest==prevLocalBest){
-                    termCounter++;
-                }
-                else if(currentLocalBest!=prevLocalBest){
-                    prevLocalBest = currentLocalBest;
-                    termCounter = 0;
-                }
-
-                evalCounter++;
             }
-
-            bestSolutionArrayList.add(getBestSolution(population));
+            //Sort Inital popl
         }
-
-        solutionLog.write(getBestSolutionBitString(getBestSolution(bestSolutionArrayList)));
-
-        outLog.close();
-        solutionLog.close();
-
     }
 
 

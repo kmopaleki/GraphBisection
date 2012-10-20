@@ -97,7 +97,7 @@ public class EaTester {
                                 fitnessFunction,survivorStrat,penaltyScalar);
 
         //perform the mincut Algorithm
-        minCutAlgorithmFourClass.minCutAlgorithmTwo(eaGraph,graphFile.getName());
+        minCutAlgorithmFourClass.NSGA(eaGraph,graphFile.getName());
 
         System.out.println("finished");
 
