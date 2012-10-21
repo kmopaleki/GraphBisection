@@ -95,9 +95,15 @@ public class MinCutAlgorithmFourClass {
         outLog.write("Surivivor Selection Alg: " + survivorAlg + "\r\n");
         outLog.write("Fitness Function: " + fitnessFunction + "\r\n");
         outLog.write("Result Log"+"\r\n");
-        for(int i = 0; i<1; i++){
+
+        double localbest = 0.000;
+        double localaverage = 0.0000;
+
+        ParetoFront paretoFront = new ParetoFront();
+        for(int i = 0; i<numberOfRuns; i++){
             //Generate Initial Population
             ArrayList<MemberNode> population = new ArrayList<MemberNode>();
+            int childcounter = populationSize;
 
             for(int k = 0; k<populationSize; k++){
                 ArrayList<Boolean> bitSet = getBitStrings(numVertices);
@@ -110,9 +116,21 @@ public class MinCutAlgorithmFourClass {
                 (double)penaltyScalar);
             }
             assignLevelOfNonDomAndSort(population);
+            int evalCounter = 0;
+            int termCounter = 0;
+            double prevLocalBest = 0.0000;
+            double currentLocalBest;
+            outLog.write("Run #: " + (i+1)+"\r\n");
 
-            for(int j = 0; j<numberOfEvals; j++){
+            if(i==0){
+                paretoFront.setAverageFitness(getAverageFitness(population));
+                paretoFront.setParetoPopulation(population);
+            }
+            while(evalCounter<numberOfEvals&&!termCondition(termCounter)){
                 //Select Parents
+                //set selected flags to false
+                System.out.println("Run # " + i + " Eval #" + evalCounter);
+                setSelectedFlagsToFalse(population);
                 ArrayList<MemberNode> mating_pool = new ArrayList<MemberNode>();
                 if(selectionAlg.equals("Tournament")){
                     kParentNonDomTournamentSelection(mating_pool,population);
@@ -135,35 +153,102 @@ public class MinCutAlgorithmFourClass {
 
                 //Assign fitness Value to children
                 for(int k = 0; k<spawningPool.size(); k++){
-                    spawningPool.get(j).setFitnessValueAndNumDem(spawningPool.get(j).getBitString(),graph,fitnessFunction,
+                    spawningPool.get(k).setFitnessValueAndNumDem(spawningPool.get(k).getBitString(),graph,fitnessFunction,
                           (double)penaltyScalar);
                 }
-                //Combine Population + Children
 
-                population.addAll(spawningPool);
-                assignLevelOfNonDomAndSort(population);
+                //Combine Population + Children
+                if(survivorStrat.equals("Plus")){
+                    population.addAll(spawningPool);
+                    assignLevelOfNonDomAndSort(population);
+                }else if(survivorStrat.equals("Comma")){
+                    population.clear();
+                    population.addAll(spawningPool);
+
+                    //now we need to make sure that the population size is still 200
+                    //so we duplicate children to fill it up.
+                    while(population.size()<populationSize){
+                        int randomIndex = randomValue.nextInt(population.size());
+                        MemberNode newMember = population.get(randomIndex);
+                        population.add(newMember);
+                    }
+                    assignLevelOfNonDomAndSort(population);
+
+
+                }
 
                 //Survival Selection
-                ArrayList<MemberNode> nextGeneration = new ArrayList<MemberNode>();
                 if(survivorAlg.equals("UniformRandom")){
                     randomSurvival(population);
 
                 }else if(survivorAlg.equals("Tournament")){
-                    kSurvivalNonDomTournamentSelection(population,nextGeneration);
+                    kSurvivalNonDomTournamentSelection(population);
 
                 }else if(survivorAlg.equals("TournamentNo")){
-                    kSurivalNonDomTournamentSelectionNo(population,nextGeneration);
+                    kSurivalNonDomTournamentSelectionNo(population);
+                }else if(survivorAlg.equals("Truncation")){
+                    truncation(population);
                 }
                 assignLevelOfNonDomAndSort(population);
+
+                if(evalCounter%numChildren==0){
+                    localbest = getBestFitness(population);
+                    localaverage = getAverageFitness(population);
+                    outLog.write(childcounter + "\t" + (-1)*localaverage + "\t"+(-1)*localbest + "\r\n");
+                    childcounter = childcounter+numChildren;
+
+                }
+                evalCounter++;
+
+                if(evalCounter==numberOfEvals){
+                    if(getAverageFitness(population)<paretoFront.getAverageFitness()){
+
+                        paretoFront.setAverageFitness(getAverageFitness(population));
+                        paretoFront.setParetoPopulation(population);
+                    }
+                }
 
             }
 
         }
+
+        //Write Pareto Front to solution File
+        assignLevelOfNonDomAndSort(paretoFront.getParetoPopulation());
+        for(int i = 0; i<paretoFront.getParetoPopulation().size();i++){
+            solutionLog.write(String.valueOf(paretoFront.getParetoPopulation().get(i).getMinNumerator()) + "\t"
+                    + String.valueOf(paretoFront.getParetoPopulation().get(i).getMaxDenominator()) + "\t"
+                    + paretoFront.getParetoPopulation().get(i).getFitnessValue() + "\t" +
+                    getBestSolutionBitString(paretoFront.getParetoPopulation().get(i)) + "\r\n"
+                    );
+        }
+
+        outLog.close();
+        solutionLog.close();
+    }
+
+    private void setSelectedFlagsToFalse(ArrayList<MemberNode> population) {
+        for(int i = 0; i<population.size(); i++){
+            population.get(i).setBeenParentSelected(false);
+            population.get(i).setBeenSelectedSon(false);
+        }
     }
 
     private void kParentNonDomTournamentSelectionNo(ArrayList<MemberNode> mating_pool, ArrayList<MemberNode> population) {
-        int parentCounter = 0;
-        while(parentCounter<numParents){
+        while(mating_pool.size()<numParents){
+            int current_best = randomValue.nextInt(population.size());
+            while(population.get(current_best).isBeenParentSelected()){
+                current_best = randomValue.nextInt(population.size());
+            }
+            for(int i = 0; i<kParent-1; i++){
+                int index = randomValue.nextInt(population.size());
+                while(population.get(index).isBeenParentSelected()){
+                    index = randomValue.nextInt(population.size());
+                }
+                if(population.get(index).getNonDomLevel()<population.get(current_best).getNonDomLevel()){
+                    current_best = index;
+                }
+            }
+            mating_pool.add(population.get(current_best));
 
         }
 
@@ -171,7 +256,16 @@ public class MinCutAlgorithmFourClass {
 
 
     private void kParentNonDomTournamentSelection(ArrayList<MemberNode> mating_pool,ArrayList<MemberNode> population){
-
+        while(mating_pool.size()<numParents){
+            int currentbest = randomValue.nextInt(population.size());
+            for(int i = 0; i<kParent-1; i++){
+                int index = randomValue.nextInt(population.size());
+                if(population.get(index).getNonDomLevel()<population.get(currentbest).getNonDomLevel()){
+                    currentbest = index;
+                }
+            }
+            mating_pool.add(population.get(currentbest));
+        }
     }
 
 
@@ -233,12 +327,13 @@ public class MinCutAlgorithmFourClass {
 
     private void truncation(ArrayList<MemberNode> population) {
         //Sort the population based on fitness
+
         ArrayList<MemberNode> nextGen = new ArrayList<MemberNode>();
         //find best index
         while(nextGen.size()<populationSize){
             int current_best = 0;
             for(int i = 0; i<population.size(); i++){
-                if(population.get(current_best).getFitnessValue()>population.get(i).getFitnessValue()){
+                if(population.get(current_best).getNonDomLevel()<population.get(i).getNonDomLevel()){
                     current_best = i;
                 }
             }
@@ -284,13 +379,37 @@ public class MinCutAlgorithmFourClass {
         return bitSet;
     }
 
-    private void kParentTournamentSelection(ArrayList<MemberNode> possibleParentPop, ArrayList<MemberNode> population){
+
+    private void kSurivalNonDomTournamentSelectionNo(ArrayList<MemberNode> population){
+        while(population.size()>populationSize){
+            int killIndex = randomValue.nextInt(population.size());
+            while(population.get(killIndex).isBeenSelectedSon()){
+                killIndex = randomValue.nextInt(population.size());
+            }
+            for(int i = 0; i<kSurvival; i++){
+                int index = randomValue.nextInt(population.size());
+                while(population.get(index).isBeenSelectedSon()){
+                    index = randomValue.nextInt(population.size());
+                }
+                if(population.get(index).getNonDomLevel()>population.get(killIndex).getNonDomLevel()){
+                    killIndex = index;
+                }
+            }
+            population.remove(killIndex);
+        }
     }
 
-    private void kSurivalNonDomTournamentSelectionNo(ArrayList<MemberNode> population, ArrayList<MemberNode> nextGeneration){
-    }
-
-    private void kSurvivalNonDomTournamentSelection(ArrayList<MemberNode> population,ArrayList<MemberNode> nextGeneration) {
+    private void kSurvivalNonDomTournamentSelection(ArrayList<MemberNode> population) {
+        while(population.size()>populationSize){
+            int killIndex = randomValue.nextInt(population.size());
+            for(int i = 0; i<kSurvival; i++){
+                int index = randomValue.nextInt(population.size());
+                if(population.get(index).getNonDomLevel()>population.get(killIndex).getNonDomLevel()){
+                    killIndex = index;
+                }
+            }
+            population.remove(killIndex);
+        }
 
     }
 
@@ -315,13 +434,11 @@ public class MinCutAlgorithmFourClass {
         int childCounter = 0;
         while(spawningPool.size()<numChildren){
             int random1 = randomValue.nextInt(parentPool.size());
-//            MemberNode parent1 = new MemberNode(parentPool.get(random1).getBitString(),parentPool.get(random1).getFitnessValue());
             MemberNode parent1 = parentPool.get(random1);
             int random2 = randomValue.nextInt(parentPool.size());
             while(random2==random1){
                 random2 = randomValue.nextInt(parentPool.size());
             }
-//            MemberNode parent2 = new MemberNode(parentPool.get(random2).getBitString(), parentPool.get(random2).getFitnessValue());
             MemberNode parent2 = parentPool.get(random2);
 
             //Create Child 1
@@ -417,6 +534,9 @@ public class MinCutAlgorithmFourClass {
         //AssignLevel of NonDomination
         //The more members of the population this dominates, the higher
         //level of non-domination
+
+        //set level of nondomination to 0
+
         for(int i =0 ;i <sortingPopulation.size(); i++){
             int nonDomCount = 0;
             for(int j = 0; j<sortingPopulation.size(); j++){
