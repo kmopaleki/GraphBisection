@@ -35,6 +35,7 @@ public class MinCutAlgorithmFourClass {
     private int penaltyScalar;
 
 
+
     public MinCutAlgorithmFourClass() {
     }
 
@@ -215,11 +216,13 @@ public class MinCutAlgorithmFourClass {
         //Write Pareto Front to solution File
         assignLevelOfNonDomAndSort(paretoFront.getParetoPopulation());
         for(int i = 0; i<paretoFront.getParetoPopulation().size();i++){
-            solutionLog.write(String.valueOf(paretoFront.getParetoPopulation().get(i).getMinNumerator()) + "\t"
+            if(paretoFront.getParetoPopulation().get(i).getNonDomLevel()==1){
+                solutionLog.write(String.valueOf(paretoFront.getParetoPopulation().get(i).getMinNumerator()) + "\t"
                     + String.valueOf(paretoFront.getParetoPopulation().get(i).getMaxDenominator()) + "\t"
                     + paretoFront.getParetoPopulation().get(i).getFitnessValue() + "\t" +
                     getBestSolutionBitString(paretoFront.getParetoPopulation().get(i)) + "\r\n"
                     );
+            }
         }
 
         outLog.close();
@@ -247,6 +250,11 @@ public class MinCutAlgorithmFourClass {
                 if(population.get(index).getNonDomLevel()<population.get(current_best).getNonDomLevel()){
                     current_best = index;
                 }
+                if(population.get(index).getNonDomLevel()== population.get(current_best).getNonDomLevel()){
+                    if(population.get(index).getFitnessValue()<population.get(current_best).getFitnessValue()){
+                        current_best = index;
+                    }
+                }
             }
             mating_pool.add(population.get(current_best));
 
@@ -262,6 +270,11 @@ public class MinCutAlgorithmFourClass {
                 int index = randomValue.nextInt(population.size());
                 if(population.get(index).getNonDomLevel()<population.get(currentbest).getNonDomLevel()){
                     currentbest = index;
+                }
+                if(population.get(index).getNonDomLevel()== population.get(currentbest).getNonDomLevel()){
+                    if(population.get(index).getFitnessValue()<population.get(currentbest).getFitnessValue()){
+                        currentbest = index;
+                    }
                 }
             }
             mating_pool.add(population.get(currentbest));
@@ -394,6 +407,11 @@ public class MinCutAlgorithmFourClass {
                 if(population.get(index).getNonDomLevel()>population.get(killIndex).getNonDomLevel()){
                     killIndex = index;
                 }
+                if(population.get(index).getNonDomLevel()== population.get(killIndex).getNonDomLevel()){
+                    if(population.get(index).getFitnessValue()>population.get(killIndex).getFitnessValue()){
+                        killIndex = index;
+                    }
+                }
             }
             population.remove(killIndex);
         }
@@ -406,6 +424,11 @@ public class MinCutAlgorithmFourClass {
                 int index = randomValue.nextInt(population.size());
                 if(population.get(index).getNonDomLevel()>population.get(killIndex).getNonDomLevel()){
                     killIndex = index;
+                }
+                if(population.get(index).getNonDomLevel()== population.get(killIndex).getNonDomLevel()){
+                    if(population.get(index).getFitnessValue()>population.get(killIndex).getFitnessValue()){
+                        killIndex = index;
+                    }
                 }
             }
             population.remove(killIndex);
@@ -531,45 +554,49 @@ public class MinCutAlgorithmFourClass {
     }
 
     private void assignLevelOfNonDomAndSort(ArrayList<MemberNode> sortingPopulation){
-        //AssignLevel of NonDomination
-        //The more members of the population this dominates, the higher
-        //level of non-domination
+        ArrayList<MemberNode> tempPop = new ArrayList<MemberNode>();
+        //Set all levels to 0
+        for(int i = 0;i<sortingPopulation.size();i++){
+            sortingPopulation.get(i).setNonDomLevel(0);
+        }
+        int levelCounter = 1;
+        while(sortingPopulation.size()>0){
 
-        //set level of nondomination to 0
+            for(int i=0; i<sortingPopulation.size(); i++){
+                boolean isDominated = false;
+                for(int j = 0; j<sortingPopulation.size(); j++){
+                    if(sortingPopulation.get(j).getMinNumerator()<sortingPopulation.get(i).getMinNumerator()){
+                        if(sortingPopulation.get(j).getMaxDenominator()>=sortingPopulation.get(i).getMaxDenominator()){
+                            isDominated = true;
+                        }
+                    }
+                    if(sortingPopulation.get(j).getMaxDenominator()>=sortingPopulation.get(i).getMaxDenominator()){
+                        if(sortingPopulation.get(j).getMinNumerator()<sortingPopulation.get(i).getMinNumerator()){
+                            isDominated = true;
+                        }
+                    }
+                }
 
-        for(int i =0 ;i <sortingPopulation.size(); i++){
-            int nonDomCount = 0;
-            for(int j = 0; j<sortingPopulation.size(); j++){
-                if(dominates(sortingPopulation.get(i), sortingPopulation.get(j))){
-                    ++nonDomCount;
+                if(!isDominated){
+                    sortingPopulation.get(i).setNonDomLevel(levelCounter);
                 }
             }
-            sortingPopulation.get(i).setNonDomCount(nonDomCount);
-        }
 
-        //Sort
-        mergeSort(sortingPopulation,0,sortingPopulation.size()-1);
-
-        //Assign Levels based on index in population after sort
-        for(int i=0; i<sortingPopulation.size(); i++){
-            sortingPopulation.get(i).setNonDomLevel(i+1);
-        }
-
-
-
-    }
-
-    private boolean dominates(MemberNode memberNode, MemberNode memberNode1) {
-
-        if(memberNode.getMinNumerator()<memberNode1.getMinNumerator()){
-            if(memberNode.getMaxDenominator()>memberNode1.getMaxDenominator()){
-                return true;
+            //Remove all nonZero levels from population
+            for(int i = 0; i<sortingPopulation.size(); i++){
+                if(sortingPopulation.get(i).getNonDomLevel()>0){
+                    tempPop.add(sortingPopulation.get(i));
+                    sortingPopulation.remove(i);
+                }
             }
+            levelCounter++;
         }
-        return false;
+        sortingPopulation.addAll(tempPop);
+
+        mergeSort(sortingPopulation,0,sortingPopulation.size()-1);
     }
 
-    private void mergeSort(ArrayList<MemberNode> sortingPopulation, int lo,int n){
+    private void mergeSort(ArrayList<MemberNode> sortingPopulation, int lo, int n){
         int low = lo;
         int high = n;
         if(low >= high){
@@ -577,14 +604,16 @@ public class MinCutAlgorithmFourClass {
         }
 
         int middle = (low + high)/2;
-        mergeSort(sortingPopulation,low,middle);
-        mergeSort(sortingPopulation,middle+1,high);
+        mergeSort(sortingPopulation, low,middle);
+        mergeSort(sortingPopulation, middle+1,high);
         int end_low = middle;
         int start_high = middle+1;
-        while((lo <= end_low)&&(start_high<=high)){
-            if(sortingPopulation.get(low).getNonDomCount()>sortingPopulation.get(start_high).getNonDomCount()){
+
+        while((low <= end_low)&&(start_high<=high)){
+            if(sortingPopulation.get(low).getNonDomLevel()<sortingPopulation.get(start_high).getNonDomLevel()){
                 low++;
-            }else{
+            }
+            else{
                 MemberNode temp = sortingPopulation.get(start_high);
                 for(int k = start_high-1; k>=low; k--){
                     sortingPopulation.set(k+1,sortingPopulation.get(k));
@@ -595,10 +624,7 @@ public class MinCutAlgorithmFourClass {
                 start_high++;
             }
         }
-
     }
-
-
     /**
      * Below this line is nothing but getters and setters
      */

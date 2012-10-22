@@ -14,7 +14,6 @@ public class MemberNode {
     private boolean beenParentSelected;
     private int minNumerator;
     private int maxDenominator;
-    private int nonDomCount;
     private int nonDomLevel;
 
     public MemberNode() {
@@ -43,12 +42,12 @@ public class MemberNode {
     }
 
     public MemberNode(Double fitnessValue, int minNumerator,
-                      int maxDenominator, int nonDomCount,
+                      int maxDenominator, int nonDomLevel,
                       ArrayList<Boolean> bitString) {
         this.fitnessValue = fitnessValue;
         this.minNumerator = minNumerator;
         this.maxDenominator = maxDenominator;
-        this.nonDomCount = nonDomCount;
+        this.nonDomLevel = nonDomLevel;
         this.bitString = bitString;
     }
 
@@ -59,20 +58,19 @@ public class MemberNode {
         this.fitnessValue = fitnessValue;
         this.minNumerator = minNumerator;
         this.maxDenominator = maxDenominator;
-        this.nonDomCount = nonDomCount;
-        this.nonDomLevel = nonDomLevel;
+        this.nonDomLevel = nonDomCount;
     }
 
     public MemberNode(ArrayList<Boolean> bitString, Double fitnessValue,
                       boolean beenSelectedSon, boolean beenParentSelected,
-                      int minNumerator, int maxDenominator, int nonDomCount) {
+                      int minNumerator, int maxDenominator, int nonDomLevel) {
         this.bitString = bitString;
         this.fitnessValue = fitnessValue;
         this.beenSelectedSon = beenSelectedSon;
         this.beenParentSelected = beenParentSelected;
         this.minNumerator = minNumerator;
         this.maxDenominator = maxDenominator;
-        this.nonDomCount = nonDomCount;
+        this.nonDomLevel = nonDomLevel;
     }
     public double getFitnessValue() {
         return fitnessValue;
@@ -130,14 +128,6 @@ public class MemberNode {
         this.maxDenominator = maxDenominator;
     }
 
-    public int getNonDomCount() {
-        return nonDomCount;
-    }
-
-    public void setNonDomCount(int nonDomCount) {
-        this.nonDomCount = nonDomCount;
-    }
-
     public int getNonDomLevel() {
         return nonDomLevel;
     }
@@ -157,8 +147,7 @@ public class MemberNode {
 
     public void setFitnessValueAndNumDem(ArrayList<Boolean> bitString, EaGraph graph,String fitnessFunction,Double penaltyScalar) {
 
-        this.nonDomCount = 0;
-        this.nonDomLevel = 99999;
+        this.nonDomLevel = 0;
         if(fitnessFunction.equals("Original")){
             int numEdgesCut = 0;
             //look for cuts
