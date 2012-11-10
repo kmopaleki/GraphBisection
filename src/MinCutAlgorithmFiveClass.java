@@ -60,5 +60,9 @@ public class MinCutAlgorithmFiveClass {
         this.penaltyScalar = penaltyScalar;
     }
 
+    public void Biscect(){
+
+    }
+
 
 }
