@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.Random;
 
 /**
@@ -64,5 +65,10 @@ public class MinCutAlgorithmFiveClass {
 
     }
 
-
+    private void setSelectedFlagsToFalse(ArrayList<PartitionNode> population) {
+        for(int i = 0; i<population.size(); i++){
+            population.get(i).setBeenParentSelected(false);
+            population.get(i).setBeenSelectedSon(false);
+        }
+    }
 }
