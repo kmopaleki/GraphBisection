@@ -7,7 +7,7 @@ import java.util.ArrayList;
  * Time: 1:01 AM
  * To change this template use File | Settings | File Templates.
  */
-public class PartitionNode {
+public class ParetoNode {
     private ArrayList<Boolean> bitString;
     private Double fitnessValue;
     private boolean beenSelectedSon;
@@ -16,34 +16,34 @@ public class PartitionNode {
     private int maxDenominator;
     private int nonDomLevel;
 
-    public PartitionNode() {
+    public ParetoNode() {
         this.bitString = new ArrayList<Boolean>();
         this.beenSelectedSon = false;
         this.beenParentSelected = false;
     }
 
-    public PartitionNode(ArrayList<Boolean> bitString, boolean beenSelectedSon) {
+    public ParetoNode(ArrayList<Boolean> bitString, boolean beenSelectedSon) {
         this.bitString = bitString;
         this.beenSelectedSon = beenSelectedSon;
         this.beenParentSelected = false;
     }
 
-    public PartitionNode(ArrayList<Boolean> bitString, double fitnessValue){
+    public ParetoNode(ArrayList<Boolean> bitString, double fitnessValue){
         this.bitString = bitString;
         this.fitnessValue = fitnessValue;
         this.beenParentSelected = false;
     }
 
-    public PartitionNode(ArrayList<Boolean> bitString, Double fitnessValue, boolean beenSelectedSon) {
+    public ParetoNode(ArrayList<Boolean> bitString, Double fitnessValue, boolean beenSelectedSon) {
         this.bitString = bitString;
         this.fitnessValue = fitnessValue;
         this.beenSelectedSon = beenSelectedSon;
         this.beenParentSelected = false;
     }
 
-    public PartitionNode(Double fitnessValue, int minNumerator,
-                         int maxDenominator, int nonDomLevel,
-                         ArrayList<Boolean> bitString) {
+    public ParetoNode(Double fitnessValue, int minNumerator,
+                      int maxDenominator, int nonDomLevel,
+                      ArrayList<Boolean> bitString) {
         this.fitnessValue = fitnessValue;
         this.minNumerator = minNumerator;
         this.maxDenominator = maxDenominator;
@@ -51,9 +51,9 @@ public class PartitionNode {
         this.bitString = bitString;
     }
 
-    public PartitionNode(ArrayList<Boolean> bitString, Double fitnessValue,
-                         int minNumerator, int maxDenominator,
-                         int nonDomCount, int nonDomLevel) {
+    public ParetoNode(ArrayList<Boolean> bitString, Double fitnessValue,
+                      int minNumerator, int maxDenominator,
+                      int nonDomCount, int nonDomLevel) {
         this.bitString = bitString;
         this.fitnessValue = fitnessValue;
         this.minNumerator = minNumerator;
@@ -61,9 +61,9 @@ public class PartitionNode {
         this.nonDomLevel = nonDomCount;
     }
 
-    public PartitionNode(ArrayList<Boolean> bitString, Double fitnessValue,
-                         boolean beenSelectedSon, boolean beenParentSelected,
-                         int minNumerator, int maxDenominator, int nonDomLevel) {
+    public ParetoNode(ArrayList<Boolean> bitString, Double fitnessValue,
+                      boolean beenSelectedSon, boolean beenParentSelected,
+                      int minNumerator, int maxDenominator, int nonDomLevel) {
         this.bitString = bitString;
         this.fitnessValue = fitnessValue;
         this.beenSelectedSon = beenSelectedSon;

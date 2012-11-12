@@ -8,22 +8,22 @@ import java.util.ArrayList;
  * To change this template use File | Settings | File Templates.
  */
 public class ParetoFront {
-    private ArrayList<PartitionNode> paretoPopulation = new ArrayList<PartitionNode>();
+    private ArrayList<ParetoNode> paretoPopulation = new ArrayList<ParetoNode>();
     private double averageFitness;
 
     public ParetoFront() {
     }
 
-    public ParetoFront(ArrayList<PartitionNode> paretoPopulation, double averageFitness) {
+    public ParetoFront(ArrayList<ParetoNode> paretoPopulation, double averageFitness) {
         this.paretoPopulation = paretoPopulation;
         this.averageFitness = averageFitness;
     }
 
-    public ArrayList<PartitionNode> getParetoPopulation() {
+    public ArrayList<ParetoNode> getParetoPopulation() {
         return paretoPopulation;
     }
 
-    public void setParetoPopulation(ArrayList<PartitionNode> paretoPopulation) {
+    public void setParetoPopulation(ArrayList<ParetoNode> paretoPopulation) {
         this.paretoPopulation = paretoPopulation;
     }
 

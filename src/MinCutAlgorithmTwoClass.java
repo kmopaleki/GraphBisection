@@ -72,7 +72,7 @@ public class MinCutAlgorithmTwoClass {
 
     public void minCutAlgorithmTwo(EaGraph graph,String dataFileName) throws IOException {
 
-        ArrayList<PartitionNode> bestSolutionArrayList = new ArrayList<PartitionNode>();
+        ArrayList<ParetoNode> bestSolutionArrayList = new ArrayList<ParetoNode>();
         FileWriter theLogFile = new FileWriter(logFile,true);
         FileWriter theSolutionFile = new FileWriter(solutionFile,true);
         BufferedWriter outLog = new BufferedWriter(theLogFile);
@@ -103,12 +103,12 @@ public class MinCutAlgorithmTwoClass {
 
         for(int i = 0; i<numberOfRuns; i++){
             //INITIALIZE THE POPULATION
-            ArrayList<PartitionNode> population = new ArrayList<PartitionNode>();
+            ArrayList<ParetoNode> population = new ArrayList<ParetoNode>();
             int childcounter = populationSize;
 
             for(int j = 0; j<populationSize; j++){
                 ArrayList<Boolean> bitSet = getBitStrings(numVertices);
-                population.add(new PartitionNode(bitSet,false));
+                population.add(new ParetoNode(bitSet,false));
             }
 
             //EVALUATE INITIAL POPULATION
@@ -123,8 +123,8 @@ public class MinCutAlgorithmTwoClass {
             outLog.write("Run #: " + (i+1)+"\r\n");
             while(evalCounter<numberOfEvals&&!termCondition(termCounter)){
                 System.out.println("Run #" + i + "Eval # " + evalCounter);
-                ArrayList<PartitionNode> mating_pool = new ArrayList<PartitionNode>();
-                ArrayList<PartitionNode> spawning_pool = new ArrayList<PartitionNode>();
+                ArrayList<ParetoNode> mating_pool = new ArrayList<ParetoNode>();
+                ArrayList<ParetoNode> spawning_pool = new ArrayList<ParetoNode>();
                 //SELECT PARENTS
                 if(selectionAlg.equals("Tournament")){
                     kParentTournamentSelection(mating_pool, population);
@@ -165,7 +165,7 @@ public class MinCutAlgorithmTwoClass {
                     //so we duplicate children to fill it up.
                     while(population.size()<populationSize){
                         int randomIndex = randomValue.nextInt(population.size());
-                        PartitionNode newMember = new PartitionNode(population.get(randomIndex).getBitString(),population.get(randomIndex).getFitnessValue());
+                        ParetoNode newMember = new ParetoNode(population.get(randomIndex).getBitString(),population.get(randomIndex).getFitnessValue());
                         population.add(newMember);
                     }
 
@@ -182,7 +182,7 @@ public class MinCutAlgorithmTwoClass {
                 }else if(survivorAlg.equals("Proportional")){
                     fitnessProportionalSurvivalSelection(population);
                 }else if(survivorAlg.equals("TournamentR")){
-                    ArrayList<PartitionNode> survivors = new ArrayList<PartitionNode>();
+                    ArrayList<ParetoNode> survivors = new ArrayList<ParetoNode>();
                     kSurvivalTournamentSelectionR(population,survivors);
                     population.clear();
                     population.addAll(survivors);
@@ -221,10 +221,10 @@ public class MinCutAlgorithmTwoClass {
 
 
 
-    private void kParentTournamentSelectionNo(ArrayList<PartitionNode> mating_pool, ArrayList<PartitionNode> population) {
+    private void kParentTournamentSelectionNo(ArrayList<ParetoNode> mating_pool, ArrayList<ParetoNode> population) {
         int parentCounter = 0;
         while(parentCounter<numParents){
-            ArrayList<PartitionNode> tempPop = new ArrayList<PartitionNode>();
+            ArrayList<ParetoNode> tempPop = new ArrayList<ParetoNode>();
             ArrayList<Integer> tempIndexPop = new ArrayList<Integer>();
             for(int i = 0; i<kParent; i++){
                 int index = randomValue.nextInt(population.size());
@@ -257,7 +257,7 @@ public class MinCutAlgorithmTwoClass {
 
     }
 
-    private void kRandomParentSelection(ArrayList<PartitionNode> mating_pool, ArrayList<PartitionNode> population) {
+    private void kRandomParentSelection(ArrayList<ParetoNode> mating_pool, ArrayList<ParetoNode> population) {
 
         while(mating_pool.size()<numParents){
             mating_pool.add(population.get(randomValue.nextInt(population.size())));
@@ -276,7 +276,7 @@ public class MinCutAlgorithmTwoClass {
         }
     }
 
-    private double getBestFitness(ArrayList<PartitionNode> population) {
+    private double getBestFitness(ArrayList<ParetoNode> population) {
         double bestFitness = population.get(0).getFitnessValue();
         for(int i = 1; i<population.size(); i++){
             if(population.get(i).getFitnessValue()<bestFitness){
@@ -288,7 +288,7 @@ public class MinCutAlgorithmTwoClass {
         return bestFitness;
     }
 
-    private PartitionNode getBestSolution(ArrayList<PartitionNode> bestSolutionArrayList) {
+    private ParetoNode getBestSolution(ArrayList<ParetoNode> bestSolutionArrayList) {
         int current_best = 0;
         for(int i = 0; i<bestSolutionArrayList.size(); i++){
             if(bestSolutionArrayList.get(current_best).getFitnessValue()>bestSolutionArrayList.get(i).getFitnessValue()){
@@ -300,7 +300,7 @@ public class MinCutAlgorithmTwoClass {
 
     }
 
-    private String getBestSolutionBitString(PartitionNode bestSolution){
+    private String getBestSolutionBitString(ParetoNode bestSolution){
         String result = "";
 
         for(int i = 0; i<bestSolution.getBitString().size(); i++){
@@ -313,9 +313,9 @@ public class MinCutAlgorithmTwoClass {
         return result;
     }
 
-    private void truncation(ArrayList<PartitionNode> population) {
+    private void truncation(ArrayList<ParetoNode> population) {
         //Sort the population based on fitness
-        ArrayList<PartitionNode> nextGen = new ArrayList<PartitionNode>();
+        ArrayList<ParetoNode> nextGen = new ArrayList<ParetoNode>();
         //find best index
         while(nextGen.size()<populationSize){
             int current_best = 0;
@@ -333,7 +333,7 @@ public class MinCutAlgorithmTwoClass {
 
     }
 
-    private void randomSurvival(ArrayList<PartitionNode> population) {
+    private void randomSurvival(ArrayList<ParetoNode> population) {
         //In this one we will kill random people until we achieve the population size
         while(population.size()>populationSize){
             population.remove(randomValue.nextInt(population.size()));
@@ -343,7 +343,7 @@ public class MinCutAlgorithmTwoClass {
 
 
 
-    private double getAverageFitness(ArrayList<PartitionNode> population) {
+    private double getAverageFitness(ArrayList<ParetoNode> population) {
         double fitnessValueSum = 0.00000;
 
         for(int i = 0; i<population.size(); i++){
@@ -470,10 +470,10 @@ public class MinCutAlgorithmTwoClass {
 
     }
 
-    private void kParentTournamentSelection(ArrayList<PartitionNode> possibleParentPop, ArrayList<PartitionNode> population){
+    private void kParentTournamentSelection(ArrayList<ParetoNode> possibleParentPop, ArrayList<ParetoNode> population){
         int parentCounter = 0;
         while(parentCounter<numParents){
-            ArrayList<PartitionNode> tempPop = new ArrayList<PartitionNode>();
+            ArrayList<ParetoNode> tempPop = new ArrayList<ParetoNode>();
             for(int i = 0; i<kParent; i++){
                 tempPop.add(population.get(randomValue.nextInt(population.size())));
             }
@@ -498,9 +498,9 @@ public class MinCutAlgorithmTwoClass {
         }
     }
 
-    private void fitnessProportionalSelection(ArrayList<PartitionNode> population, ArrayList<PartitionNode> parents){
+    private void fitnessProportionalSelection(ArrayList<ParetoNode> population, ArrayList<ParetoNode> parents){
         //WE are going to sort the population based on fitness
-        ArrayList<PartitionNode> nextGen = new ArrayList<PartitionNode>();
+        ArrayList<ParetoNode> nextGen = new ArrayList<ParetoNode>();
         //find best index
         while(nextGen.size()<((0.6)*(double)populationSize)){
             int current_best = 0;
@@ -538,10 +538,10 @@ public class MinCutAlgorithmTwoClass {
         population.addAll(nextGen);
     }
 
-    private void fitnessProportionalSurvivalSelection(ArrayList<PartitionNode> population){
+    private void fitnessProportionalSurvivalSelection(ArrayList<ParetoNode> population){
         //WE are going to sort the population based on fitness
-        ArrayList<PartitionNode> nextGen = new ArrayList<PartitionNode>();
-        ArrayList<PartitionNode> survivors = new ArrayList<PartitionNode>();
+        ArrayList<ParetoNode> nextGen = new ArrayList<ParetoNode>();
+        ArrayList<ParetoNode> survivors = new ArrayList<ParetoNode>();
         //find best index
         while(nextGen.size()<((0.6)*(double)populationSize)){
             int current_best = 0;
@@ -576,7 +576,7 @@ public class MinCutAlgorithmTwoClass {
         population.addAll(survivors);
     }
 
-    private void kSurivalTournamentSelection(ArrayList<PartitionNode> population){
+    private void kSurivalTournamentSelection(ArrayList<ParetoNode> population){
         //Pick 4 random indices
         while(population.size()>populationSize){
             ArrayList<Integer> indices = new ArrayList<Integer>();
@@ -600,7 +600,7 @@ public class MinCutAlgorithmTwoClass {
         }
     }
 
-    private void kSurvivalTournamentSelectionR(ArrayList<PartitionNode> population,ArrayList<PartitionNode> nextGeneration) {
+    private void kSurvivalTournamentSelectionR(ArrayList<ParetoNode> population,ArrayList<ParetoNode> nextGeneration) {
         while(nextGeneration.size()<populationSize){
             ArrayList<Integer> indices = new ArrayList<Integer>();
             for(int i = 0; i<kSurvival; i++){
@@ -622,7 +622,7 @@ public class MinCutAlgorithmTwoClass {
         }
     }
 
-    private boolean isAlreadyPicked(int index, ArrayList<PartitionNode> population) {
+    private boolean isAlreadyPicked(int index, ArrayList<ParetoNode> population) {
         if(population.get(index).getBeenSelectedSon()){
             return true;
         }
@@ -638,22 +638,22 @@ public class MinCutAlgorithmTwoClass {
         return false;
     }
 
-    private void UniformCrossover(ArrayList<PartitionNode> parentPool,
-                                  ArrayList<PartitionNode>spawningPool){
+    private void UniformCrossover(ArrayList<ParetoNode> parentPool,
+                                  ArrayList<ParetoNode>spawningPool){
         int childCounter = 0;
         while(spawningPool.size()<numChildren){
             int random1 = randomValue.nextInt(parentPool.size());
-//            PartitionNode parent1 = new PartitionNode(parentPool.get(random1).getBitString(),parentPool.get(random1).getFitnessValue());
-            PartitionNode parent1 = parentPool.get(random1);
+//            ParetoNode parent1 = new ParetoNode(parentPool.get(random1).getBitString(),parentPool.get(random1).getFitnessValue());
+            ParetoNode parent1 = parentPool.get(random1);
             int random2 = randomValue.nextInt(parentPool.size());
             while(random2==random1){
                 random2 = randomValue.nextInt(parentPool.size());
             }
-//            PartitionNode parent2 = new PartitionNode(parentPool.get(random2).getBitString(), parentPool.get(random2).getFitnessValue());
-            PartitionNode parent2 = parentPool.get(random2);
+//            ParetoNode parent2 = new ParetoNode(parentPool.get(random2).getBitString(), parentPool.get(random2).getFitnessValue());
+            ParetoNode parent2 = parentPool.get(random2);
 
             //Create Child 1
-            PartitionNode child1 = new PartitionNode();
+            ParetoNode child1 = new ParetoNode();
             if((numChildren - childCounter) > 0){
                 for(int i = 0; i<parent1.getBitString().size(); i++){
                     double probability = ((double)(randomValue.nextInt(populationSize)))/((double)populationSize);
@@ -671,7 +671,7 @@ public class MinCutAlgorithmTwoClass {
         }
     }
 
-    private void nPointCrossOver(ArrayList<PartitionNode> spawning_pool, ArrayList<PartitionNode> mating_pool){
+    private void nPointCrossOver(ArrayList<ParetoNode> spawning_pool, ArrayList<ParetoNode> mating_pool){
         while(spawning_pool.size()<numChildren){
             ArrayList<Integer> randomInts = new ArrayList<Integer>();
             for(int i = 0; i<nCrossNum; i++){
@@ -688,7 +688,7 @@ public class MinCutAlgorithmTwoClass {
             int index2= randomValue.nextInt(mating_pool.size());
 
             //Create a child
-            PartitionNode child = new PartitionNode();
+            ParetoNode child = new ParetoNode();
             while(index1==index2){
                 index2 = randomValue.nextInt(mating_pool.size());
             }
@@ -715,7 +715,7 @@ public class MinCutAlgorithmTwoClass {
 
     }
 
-    private void bitFlipMutation(ArrayList<PartitionNode> spawningPool){
+    private void bitFlipMutation(ArrayList<ParetoNode> spawningPool){
         for(int i = 0; i<spawningPool.size(); i++){
             for(int j = 0; j<spawningPool.get(i).getBitString().size(); j++){
                 int rando = randomValue.nextInt(100);
