@@ -12,14 +12,18 @@ public class GraphNode {
     private Double fitnessValue;
     private boolean beenSelectedSon;
     private boolean beenParentSelected;
+    private int numEdges;
+    private Random random;
 
 
 
-    public GraphNode(int size) {
+    public GraphNode(int size,Random random) {
         this.size = size;
         this.edgeList = createEdgeList(size);
         this.beenParentSelected = false;
         this.beenSelectedSon=false;
+        this.numEdges = 40;
+        this.random = random;
     }
 
     public GraphNode(int size,ArrayList<Edge> edgeList) {
@@ -71,12 +75,8 @@ public class GraphNode {
     }
 
     private ArrayList<Edge> createEdgeList(int size){
-        //lets pick a random size
-        Random random = new Random(654987321);
         ArrayList<Edge> edgeArrayList = new ArrayList<Edge>();
-
         for(int i = 0; i<size; i++){
-            int numEdges = random.nextInt(size-1);
             for(int j = 0; j<numEdges; j++){
 
                 int y_edge = random.nextInt(size);
@@ -106,7 +106,19 @@ public class GraphNode {
 
     }
 
+    public int getNumEdges() {
+        return numEdges;
+    }
 
+    public void setNumEdges(int numEdges) {
+        this.numEdges = numEdges;
+    }
 
+    public Random getRandom() {
+        return random;
+    }
 
+    public void setRandom(Random random) {
+        this.random = random;
+    }
 }

@@ -20,11 +20,19 @@ public class MinCutAlgorithmFiveClass {
     private String mutationAlg;
     private int penaltyScalar;
     private int bitFlipProb;
+    private int numChildren;
+    private int graphSize;
+    private int nPoint;
+    private int nCrossNum;
 
     public MinCutAlgorithmFiveClass() {
     }
 
+    /**
+     * The Haus algorithm
+     */
     public void COEA(){
+
 
     }
 
@@ -156,7 +164,7 @@ public class MinCutAlgorithmFiveClass {
      * @param graphPopulation
      */
 
-    private void kRandomParentSelection(ArrayList<ParetoNode> mating_pool, ArrayList<ParetoNode> population,
+    private void kRandomParentSelection(ArrayList<PartNode> mating_pool, ArrayList<PartNode> population,
                                         ArrayList<GraphNode>graphMatingPool,ArrayList<GraphNode> graphPopulation) {
 
         while(mating_pool.size()<numParents){
@@ -364,13 +372,49 @@ public class MinCutAlgorithmFiveClass {
      *
      * @param spawning_pool
      * @param mating_pool
-     * @param graph_spawning_pool
-     * @param graph_mating_pool
      */
-    private void nPointCrossover(ArrayList<PartNode> spawning_pool,ArrayList<PartNode> mating_pool,
-                                 ArrayList<GraphNode> graph_spawning_pool, ArrayList<GraphNode>graph_mating_pool)
+    private void nPointCrossover(ArrayList<PartNode> spawning_pool,ArrayList<PartNode> mating_pool)
     {
+        while(spawning_pool.size()<numChildren){
+            ArrayList<Integer> randomInts = new ArrayList<Integer>();
+            for(int i = 0; i<nCrossNum; i++){
+                int index = randomValue.nextInt(mating_pool.get(0).getBitString().size());
+                while(isAlreadyPicked(randomInts,index)){
+                    index = randomValue.nextInt(mating_pool.get(0).getBitString().size());
+                }
+                randomInts.add(index);
+            }
 
+            boolean  flipper = false;
+            //Pick two parents
+            int index1= randomValue.nextInt(mating_pool.size());
+            int index2= randomValue.nextInt(mating_pool.size());
+
+            //Create a child
+            PartNode child = new PartNode();
+            while(index1==index2){
+                index2 = randomValue.nextInt(mating_pool.size());
+            }
+
+            for(int i = 0; i<mating_pool.get(index1).getBitString().size(); i++){
+                //setflipper
+                if(isTimeToFlip(i,randomInts)){
+                    if(flipper){
+                        flipper = false;
+                    }else if(!flipper){
+                        flipper = true;
+                    }
+                }
+                if(!flipper){
+                    child.getBitString().add(mating_pool.get(index1).getBitString().get(i));
+                }else if(flipper){
+                    child.getBitString().add(mating_pool.get(index2).getBitString().get(i));
+                }
+            }
+
+            spawning_pool.add(child);
+
+        }
     }
 
     /**
@@ -378,11 +422,83 @@ public class MinCutAlgorithmFiveClass {
      *
      * @param spawning_pool
      * @param mating_pool
-     * @param graph_spawning_pool
-     * @param graph_mating_pool
      */
-    private void uniformCrossOver(ArrayList<PartNode> spawning_pool,ArrayList<PartNode> mating_pool,
-                                  ArrayList<GraphNode> graph_spawning_pool, ArrayList<GraphNode>graph_mating_pool){
+    private void uniformCrossOver(ArrayList<PartNode> spawning_pool,ArrayList<PartNode> mating_pool){
+
+        /**
+         * For Partitions
+         */
+
+        int childCounter = 0;
+        while(spawning_pool.size()<numChildren){
+            int random1 = randomValue.nextInt(mating_pool.size());
+//            PartNode parent1 = new PartNode(mating_pool.get(random1).getBitString(),mating_pool.get(random1).getFitnessValue());
+            PartNode parent1 = mating_pool.get(random1);
+            int random2 = randomValue.nextInt(mating_pool.size());
+            while(random2==random1){
+                random2 = randomValue.nextInt(mating_pool.size());
+            }
+//            PartNode parent2 = new PartNode(mating_pool.get(random2).getBitString(), mating_pool.get(random2).getFitnessValue());
+            PartNode parent2 = mating_pool.get(random2);
+
+            //Create Child 1
+            PartNode child1 = new PartNode();
+            if((numChildren - childCounter) > 0){
+                for(int i = 0; i<parent1.getBitString().size(); i++){
+                    double probability = ((double)(randomValue.nextInt(populationSize)))/((double)populationSize);
+                    if(probability<=0.5){
+                        child1.getBitString().add(parent1.getBitString().get(i));
+                    }else{
+                        child1.getBitString().add(parent2.getBitString().get(i));
+                    }
+
+                }
+
+            }
+            spawning_pool.add(child1);
+            childCounter++;
+        }
+
+    }
+
+    /**
+     * Graph Crossover - 1 point for graphs basically
+     */
+    private void graphCrossOver(ArrayList<GraphNode> spawning_pool,ArrayList<GraphNode> mating_pool){
+        while(spawning_pool.size()<numChildren){
+            int random1 = randomValue.nextInt(mating_pool.size());
+            GraphNode parent1 = mating_pool.get(random1);
+            int random2 = randomValue.nextInt(mating_pool.size());
+            while(random2==random1){
+                random2 = randomValue.nextInt(mating_pool.size());
+            }
+            GraphNode parent2 = mating_pool.get(random2);
+            ArrayList<Edge> edges = new ArrayList<Edge>();
+            for(int i = 0; i<nPoint; i++){
+               edges.add(parent1.getEdgeList().get(i));
+            }
+            for(int j = nPoint; j<parent2.getEdgeList().size(); j++){
+
+                if(alreadyexists(parent2.getEdgeList().get(j).getxVertex(),parent2.getEdgeList().get(j).getyVertex(),edges)){
+                    //Create a brand new edge with elements from parent 1
+                    int x = parent1.getEdgeList().get(j).getxVertex();
+                    int y = parent1.getEdgeList().get(j).getyVertex();
+                    System.out.println("HAHAHAHAHAHAHAHAHAHAHAHAHAHAHAHA");
+                    while(alreadyexists(x,y,edges)){
+                        System.out.println("HAHAHAHAHAHAHAHAHAHAHAHAHAHAHAHA");
+                        y = randomValue.nextInt(graphSize);
+                        while(y==x){
+                            y = randomValue.nextInt(graphSize);
+                        }
+                    }
+                    edges.add(new Edge(x,y));
+                }else{
+                    edges.add(parent2.getEdgeList().get(j));
+                }
+            }
+
+            spawning_pool.add(new GraphNode(graphSize,edges));
+        }
 
     }
 
@@ -415,7 +531,34 @@ public class MinCutAlgorithmFiveClass {
      * @param graphs_spawning_pool
      */
     private void edgeLossGainMutation(ArrayList<GraphNode> graphs_spawning_pool){
+        for(int i = 0; i<graphs_spawning_pool.size(); i++){
+            for(int j = 0; j<graphs_spawning_pool.get(i).getEdgeList().size();j++){
+                //we will use the same mutation probability that bitflip uses for graph mutation
+                int rando = randomValue.nextInt(100);
+                if(rando <= bitFlipProb){
+                    int choice = randomValue.nextInt(2);//if its 0 - destroy edges, 1 - create edges
+                    if(choice==0){
+                        int edgesToKill = randomValue.nextInt(25)+1;
+                        for(int k = 0; k<edgesToKill; k++){
+                            graphs_spawning_pool.get(i).getEdgeList().remove(randomValue.nextInt(graphs_spawning_pool.get(i).getEdgeList().size()));
+                        }
 
+
+                    }else if(choice == 1){
+                        int edgesToCreate = randomValue.nextInt(5)+1;
+                        for(int k = 0; k<edgesToCreate; k++){
+                            int x = randomValue.nextInt(graphs_spawning_pool.get(i).getEdgeList().size());
+                            int y = randomValue.nextInt(graphs_spawning_pool.get(i).getEdgeList().size());
+                            if(x!=y&&!graphs_spawning_pool.get(i).getEdgeList().contains(new Edge(x,y))){
+                                if(!graphs_spawning_pool.get(i).getEdgeList().contains(new Edge(x,y)));
+                                Edge edge = new Edge(x,y);
+                                graphs_spawning_pool.get(i).getEdgeList().add(edge);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
 
@@ -570,6 +713,42 @@ public class MinCutAlgorithmFiveClass {
         }
         return false;
 
+    }
+
+    public ArrayList<Boolean> getBitStrings(int size){
+        ArrayList<Boolean> bitSet = new ArrayList<Boolean>();
+        for(int i = 0; i<size+1; i++){
+            int rando = randomValue.nextInt(2);
+            if(rando==1){
+                bitSet.add(true);
+            }else if(rando==0){
+                bitSet.add(false);
+            }
+        }
+        return bitSet;
+    }
+
+    private boolean alreadyexists(int x,int y,ArrayList<Edge> edgesList){
+        for(int i = 0; i<edgesList.size(); i++){
+            if(edgesList.get(i).getxVertex()==x&&edgesList.get(i).getyVertex()==y){
+                return true;
+            }
+            if(edgesList.get(i).getxVertex()==y&&edgesList.get(i).getyVertex()==x){
+                return true;
+            }
+        }
+
+        return false;
+
+    }
+
+    private boolean isTimeToFlip(int i,ArrayList<Integer> nPoints){
+        for(int j = 0; j<nPoints.size();j++){
+            if(nPoints.get(j).equals(i)){
+                return true;
+            }
+        }
+        return  false;
     }
 
 
