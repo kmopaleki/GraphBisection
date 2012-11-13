@@ -19,6 +19,7 @@ public class MinCutAlgorithmFiveClass {
     private String selectionAlg;
     private String mutationAlg;
     private int penaltyScalar;
+    private int bitFlipProb;
 
     public MinCutAlgorithmFiveClass() {
     }
@@ -115,7 +116,6 @@ public class MinCutAlgorithmFiveClass {
         /**
          * For Partitions
          */
-        //Set all parentselected flags to false
 
         //Get our N parents
         while(mating_pool.size()<numParents){
@@ -389,6 +389,34 @@ public class MinCutAlgorithmFiveClass {
     /**
      * Mutation Algorithms
      */
+
+    /**
+     * Bit Flip Mutation - for partitions
+     * @param spawning_pool
+     */
+    private void bitFlipMutation(ArrayList<PartNode> spawning_pool){
+        for(int i = 0; i<spawning_pool.size(); i++){
+            for(int j = 0; j<spawning_pool.get(i).getBitString().size(); j++){
+                int rando = randomValue.nextInt(100);
+                if(rando <= bitFlipProb){
+                    if(spawning_pool.get(i).getBitString().get(j)){
+                        spawning_pool.get(i).getBitString().set(j,false);
+                    }else if(!spawning_pool.get(i).getBitString().get(j)){
+                        spawning_pool.get(i).getBitString().set(j,true);
+                    }
+
+                }
+            }
+        }
+    }
+
+    /**
+     * Edge-Loss or Gain Mutation For graphs
+     * @param graphs_spawning_pool
+     */
+    private void edgeLossGainMutation(ArrayList<GraphNode> graphs_spawning_pool){
+
+    }
 
 
     /**
