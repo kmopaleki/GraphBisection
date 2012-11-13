@@ -10,15 +10,24 @@ public class GraphNode {
     private int size;
     private ArrayList<Edge> edgeList;
     private Double fitnessValue;
+    private boolean beenSelectedSon;
+    private boolean beenParentSelected;
+
+
 
     public GraphNode(int size) {
         this.size = size;
         this.edgeList = createEdgeList(size);
+        this.beenParentSelected = false;
+        this.beenSelectedSon=false;
     }
 
     public GraphNode(int size,ArrayList<Edge> edgeList) {
         this.size = size;
         this.edgeList = edgeList;
+        this.beenParentSelected = false;
+        this.beenSelectedSon=false;
+
     }
 
     public int getSize() {
@@ -43,6 +52,22 @@ public class GraphNode {
 
     public void setFitnessValue(Double fitnessValue) {
         this.fitnessValue = fitnessValue;
+    }
+
+    public boolean isBeenSelectedSon() {
+        return beenSelectedSon;
+    }
+
+    public void setBeenSelectedSon(boolean beenSelectedSon) {
+        this.beenSelectedSon = beenSelectedSon;
+    }
+
+    public boolean isBeenParentSelected() {
+        return beenParentSelected;
+    }
+
+    public void setBeenParentSelected(boolean beenParentSelected) {
+        this.beenParentSelected = beenParentSelected;
     }
 
     private ArrayList<Edge> createEdgeList(int size){
