@@ -35,15 +35,15 @@ public class Graph {
     }
 
     public void buildAdjList(ArrayList<Boolean> bitString){
-        //build each node
+//        build each node
         adjList.add(new Node(-99999));
-        for(int i = 1; i<graphSize+1; i++){
+        for(int i = 1; i<graphSize; i++){
             Node node = new Node(i);
             adjList.add(node);
         }
 
 //        build the adj list
-        for(int i = 0; i<edgeArrayList.size(); i++){
+        for(int i = 0; i<edgeArrayList.size()-1; i++){
             if(edgeArrayList.get(i).getxVertex()>0){
                 //No point in adding edges that have been cut
                 if(bitString.get(edgeArrayList.get(i).getxVertex()).equals(bitString.get(edgeArrayList.get(i).getyVertex()))){

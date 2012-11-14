@@ -1,3 +1,6 @@
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -8,32 +11,191 @@ import java.util.Random;
 public class MinCutAlgorithmFiveClass {
 
     private int populationSize;
+    private Long randomSeed;
     private int kSurvival;
-    private Random randomValue;
     private int numParents;
     private int kParent;
     private int graphSample;
     private int partitionSample;
     private String fitnessFunction;
     private String survivalAlg;
+    private String survivalStrat;
     private String selectionAlg;
     private String mutationAlg;
+    private String recombAlg;
+    private String logFile;
+    private String solutionFile;
     private int penaltyScalar;
     private int bitFlipProb;
     private int numChildren;
     private int graphSize;
     private int nPoint;
     private int nCrossNum;
+    private int numberOfEvals;
+    private int numberOfRuns;
+    private int termNum;
+    private Random randomValue;
 
     public MinCutAlgorithmFiveClass() {
+    }
+
+    public MinCutAlgorithmFiveClass(int populationSize, int kSurvival,
+                                    Long randomSeed, int numParents,
+                                    int kParent, int graphSample,
+                                    int partitionSample, String fitnessFunction,
+                                    String survivalAlg, String survivalStrat,
+                                    String selectionAlg, String mutationAlg,
+                                    String recombAlg, String logFile,
+                                    String solutionFile, int penaltyScalar,
+                                    int bitFlipProb, int numChildren,
+                                    int graphSize, int nPoint,
+                                    int nCrossNum, int numberOfEvals,
+                                    int numberOfRuns, int termNum) {
+        this.populationSize = populationSize;
+        this.kSurvival = kSurvival;
+        this.randomValue = new Random(randomSeed);
+        this.numParents = numParents;
+        this.kParent = kParent;
+        this.graphSample = graphSample;
+        this.partitionSample = partitionSample;
+        this.fitnessFunction = fitnessFunction;
+        this.survivalAlg = survivalAlg;
+        this.survivalStrat = survivalStrat;
+        this.selectionAlg = selectionAlg;
+        this.mutationAlg = mutationAlg;
+        this.recombAlg = recombAlg;
+        this.logFile = logFile;
+        this.solutionFile = solutionFile;
+        this.penaltyScalar = penaltyScalar;
+        this.bitFlipProb = bitFlipProb;
+        this.numChildren = numChildren;
+        this.graphSize = graphSize;
+        this.nPoint = nPoint;
+        this.nCrossNum = nCrossNum;
+        this.numberOfEvals = numberOfEvals;
+        this.numberOfRuns = numberOfRuns;
+        this.termNum = termNum;
     }
 
     /**
      * The Haus algorithm
      */
-    public void COEA(){
+    public void COEA() throws IOException {
+        GraphNode bestGraph;
+        PartNode bestPartition;
+        FileWriter theLogFile = new FileWriter(logFile,true);
+        FileWriter theSolutionFile = new FileWriter(solutionFile,true);
+        BufferedWriter outLog = new BufferedWriter(theLogFile);
+        BufferedWriter solutionLog = new BufferedWriter(theSolutionFile);
 
+        outLog.write("Result Log" + "\r\n");
+        outLog.write("Number of Runs: " + numberOfRuns + " Number of Evaluations per Run: "
+                    + numberOfEvals + "\r\n");
+        outLog.write("Population Size: " + populationSize + "\r\n");
+        outLog.write("# of Parents: " + numParents + "\r\n");
+        outLog.write("# of Children: " + numChildren + "\r\n");
+        outLog.write("k Parent: " + kParent + "\r\n");
+        outLog.write("k Survival " + kSurvival + "\r\n");
+        outLog.write("n for N Point CrossOver: " + nCrossNum + "\r\n");
+        outLog.write("N termination constant: " + termNum + "\r\n");
+        outLog.write("Probability of a bit Flip: " + bitFlipProb + "\r\n");
+        outLog.write("Selection Alg: " + selectionAlg + "\r\n");
+        outLog.write("Reproduction Alg: " + recombAlg + "\r\n");
+        outLog.write("Surivivor Selection Alg: " + survivalAlg + "\r\n");
+        outLog.write("Fitness Function: " + fitnessFunction + "\r\n");
+        outLog.write("Result Log"+"\r\n");
 
+        double localbest = 0.000;
+        double localAverage = 0.000;
+
+        for(int i = 0; i<numberOfRuns; i++){
+            //INITIALIZE THE POPULATION
+            ArrayList<PartNode> partitionPopulation = new ArrayList<PartNode>();
+            ArrayList<GraphNode> graphPopulation = new ArrayList<GraphNode>();
+
+            for(int j = 0; j<populationSize; j++){
+                partitionPopulation.add(new PartNode(getBitStrings(graphSize)));
+                graphPopulation.add(new GraphNode(graphSize,randomValue));
+            }
+
+            //Evaluate Initial Population
+            for(int j = 0; j<populationSize;j++){
+                partitionPopulation.get(j).setFitnessValue(partitionFitness(partitionPopulation.get(j),graphPopulation));
+                graphPopulation.get(j).setFitnessValue(graphFitness(graphPopulation.get(j),partitionPopulation));
+            }
+            int evalCounter = 0;
+            int termCounter = 0;
+            double prevLocalBest = 0.0000;
+            double currentLocalBest;
+            outLog.write("Run #: " + (i+1)+"\r\n");
+            while(evalCounter<numberOfEvals&&!termCondition(termCounter)){
+                System.out.println("Run #" + i + "Eval # " + evalCounter);
+                ArrayList<PartNode> partition_mating_pool = new ArrayList<PartNode>();
+                ArrayList<PartNode> partition_spawning_pool = new ArrayList<PartNode>();
+                ArrayList<GraphNode> graph_spawning_pool = new ArrayList<GraphNode>();
+                ArrayList<GraphNode> graph_mating_pool = new ArrayList<GraphNode>();
+
+                //SELECT PARENTS
+                if(selectionAlg.equals("Tournament")){
+                    kParentTournamentSelection(partition_mating_pool,partitionPopulation,graph_mating_pool,graphPopulation);
+                }else if(selectionAlg.equals("TournamentNo")){
+                    kParentTournamentSelectionNo(partition_mating_pool,partitionPopulation,graph_mating_pool,graphPopulation);
+
+                }else if(selectionAlg.equals("UniformRandom")){
+
+                }
+
+                //RECOMBINATION
+                if(recombAlg.equals("Uniform")){
+                    uniformCrossOver(partition_spawning_pool,partition_mating_pool);
+                    graphCrossOver(graph_spawning_pool,graph_mating_pool);
+
+                }else if(recombAlg.equals("nPoint")){
+                    nPointCrossover(partition_spawning_pool,partition_mating_pool);
+                    graphCrossOver(graph_spawning_pool,graph_mating_pool);
+                }
+
+//                //MUTATE
+                bitFlipMutation(partition_spawning_pool);
+                edgeSwapMutation(graph_spawning_pool);
+//
+                //EVALUATE NEW KIDS
+                for(int k = 0; k<partition_spawning_pool.size();k++){
+                    partition_spawning_pool.get(k).setFitnessValue(partitionFitness(partition_spawning_pool.get(k),
+                            graphPopulation));
+                }
+                for(int k = 0; k<graph_spawning_pool.size();k++){
+                    graph_spawning_pool.get(k).setFitnessValue(graphFitness(graph_spawning_pool.get(k),partitionPopulation));
+                }
+//
+//                //SURVIVAL SELECTION
+                if(survivalStrat.equals("Plus")){
+                    graphPopulation.addAll(graph_spawning_pool);
+                    partitionPopulation.addAll(partition_spawning_pool);
+                }else if(survivalStrat.equals("Comma")){
+
+                }
+
+                if(survivalAlg.equals("Tournament")){
+                   kSurivalTournamentSelection(partitionPopulation,graphPopulation);
+
+                }else if(survivalAlg.equals("Truncation")){
+                    truncation(partitionPopulation,graphPopulation);
+
+                }else if(survivalAlg.equals("TournamentNo")){
+                    kSurivalTournamentSelectionNoR(partitionPopulation,graphPopulation);
+                }
+
+                if(evalCounter%numChildren==0){
+
+                }
+
+                evalCounter++;
+            }
+        }
+
+        outLog.close();
+        solutionLog.close();
     }
 
     /**
@@ -281,6 +443,7 @@ public class MinCutAlgorithmFiveClass {
         }
 
         while(graphPopulation.size()>populationSize){
+
             int killIndex = randomValue.nextInt(graphPopulation.size());
             while (graphPopulation.get(killIndex).isBeenSelectedSon()){
                 killIndex = randomValue.nextInt(graphPopulation.size());
@@ -443,6 +606,7 @@ public class MinCutAlgorithmFiveClass {
 
             //Create Child 1
             PartNode child1 = new PartNode();
+            child1.setBitString(new ArrayList<Boolean>());
             if((numChildren - childCounter) > 0){
                 for(int i = 0; i<parent1.getBitString().size(); i++){
                     double probability = ((double)(randomValue.nextInt(populationSize)))/((double)populationSize);
@@ -483,9 +647,7 @@ public class MinCutAlgorithmFiveClass {
                     //Create a brand new edge with elements from parent 1
                     int x = parent1.getEdgeList().get(j).getxVertex();
                     int y = parent1.getEdgeList().get(j).getyVertex();
-                    System.out.println("HAHAHAHAHAHAHAHAHAHAHAHAHAHAHAHA");
                     while(alreadyexists(x,y,edges)){
-                        System.out.println("HAHAHAHAHAHAHAHAHAHAHAHAHAHAHAHA");
                         y = randomValue.nextInt(graphSize);
                         while(y==x){
                             y = randomValue.nextInt(graphSize);
@@ -527,35 +689,24 @@ public class MinCutAlgorithmFiveClass {
     }
 
     /**
-     * Edge-Loss or Gain Mutation For graphs
+     * Edge Swap Mutation For graphs, this form of mutation, takes an edge that exists between two vertices,
+     * and moves it to another pair of vertices
      * @param graphs_spawning_pool
      */
-    private void edgeLossGainMutation(ArrayList<GraphNode> graphs_spawning_pool){
+    private void edgeSwapMutation(ArrayList<GraphNode> graphs_spawning_pool){
         for(int i = 0; i<graphs_spawning_pool.size(); i++){
-            for(int j = 0; j<graphs_spawning_pool.get(i).getEdgeList().size();j++){
-                //we will use the same mutation probability that bitflip uses for graph mutation
+            for(int j = 0; j<graphs_spawning_pool.get(i).getEdgeList().size(); j++){
                 int rando = randomValue.nextInt(100);
                 if(rando <= bitFlipProb){
-                    int choice = randomValue.nextInt(2);//if its 0 - destroy edges, 1 - create edges
-                    if(choice==0){
-                        int edgesToKill = randomValue.nextInt(25)+1;
-                        for(int k = 0; k<edgesToKill; k++){
-                            graphs_spawning_pool.get(i).getEdgeList().remove(randomValue.nextInt(graphs_spawning_pool.get(i).getEdgeList().size()));
-                        }
-
-
-                    }else if(choice == 1){
-                        int edgesToCreate = randomValue.nextInt(5)+1;
-                        for(int k = 0; k<edgesToCreate; k++){
-                            int x = randomValue.nextInt(graphs_spawning_pool.get(i).getEdgeList().size());
-                            int y = randomValue.nextInt(graphs_spawning_pool.get(i).getEdgeList().size());
-                            if(x!=y&&!graphs_spawning_pool.get(i).getEdgeList().contains(new Edge(x,y))){
-                                if(!graphs_spawning_pool.get(i).getEdgeList().contains(new Edge(x,y)));
-                                Edge edge = new Edge(x,y);
-                                graphs_spawning_pool.get(i).getEdgeList().add(edge);
-                            }
-                        }
+                    int index = j;
+                    int x = graphs_spawning_pool.get(i).getEdgeList().get(j).getxVertex();
+                    int y = randomValue.nextInt(graphSize);
+                    while(alreadyexists(x,y,graphs_spawning_pool.get(i).getEdgeList())){
+                        y = randomValue.nextInt(graphSize);
                     }
+
+                    graphs_spawning_pool.get(i).getEdgeList().remove(j);
+                    graphs_spawning_pool.get(i).getEdgeList().add(index,new Edge(x,y));
                 }
             }
         }
@@ -575,7 +726,7 @@ public class MinCutAlgorithmFiveClass {
         //Calculate the average fitness of this sample population
         double minCutSum = 0.00;
         for(int i = 0; i<samplePopulation.size(); i++){
-            minCutSum = minCutSum + getMinCutRatio(samplePopulation.get(i).getBitString(),graphNode);
+            minCutSum = minCutSum + getMinCutRatio(samplePopulation.get(i),graphNode);
         }
         //Now that we have the sum, we average the total and invert it.  This will give us the fitnes
         //of the graph, the higher the average of the sum, the better value of a fitness we will get when we invert it
@@ -585,7 +736,7 @@ public class MinCutAlgorithmFiveClass {
         return fitnessValue;
     }
 
-    private double partitionFitness(ArrayList<Boolean> partition,ArrayList<GraphNode> graphPopulation){
+    private double partitionFitness(PartNode partition,ArrayList<GraphNode> graphPopulation){
         ArrayList<GraphNode> samplePopulation = new ArrayList<GraphNode>();
         //Pick n random people from the population to create a sample population
         for(int i = 0; i<graphSample; i++){
@@ -604,7 +755,7 @@ public class MinCutAlgorithmFiveClass {
         return fitnessValue;
     }
 
-    private double getMinCutRatio(ArrayList<Boolean> bitString,GraphNode graphNode){
+    private double getMinCutRatio(PartNode partNode,GraphNode graphNode){
 
         double fitnessValue = 0.000;
         if(fitnessFunction.equals("Original")){
@@ -613,7 +764,7 @@ public class MinCutAlgorithmFiveClass {
 
             for(int m=1; m<graphNode.getEdgeList().size();m++){
                 if(cutChecker(graphNode.getEdgeList().get(m).getxVertex(),
-                        graphNode.getEdgeList().get(m).getyVertex(),bitString)){
+                        graphNode.getEdgeList().get(m).getyVertex(),partNode.getBitString())){
                     //increment the number of Edges Cut
                     numEdgesCut++;
                 }
@@ -621,11 +772,11 @@ public class MinCutAlgorithmFiveClass {
 
             int s1counter = 0;
             int s2counter = 0;
-            for(int j = 1; j<bitString.size(); j++){
+            for(int j = 1; j<partNode.getBitString().size(); j++){
 
-                if(bitString.get(j)==false){
+                if(partNode.getBitString().get(j)==false){
                     s1counter++;
-                }else if(bitString.get(j)==true){
+                }else if(partNode.getBitString().get(j)==true){
                     s2counter++;
                 }
             }
@@ -648,7 +799,7 @@ public class MinCutAlgorithmFiveClass {
 
             for(int m=1; m<graphNode.getEdgeList().size(); m++){
                 if(cutChecker(graphNode.getEdgeList().get(m).getxVertex(),
-                        graphNode.getEdgeList().get(m).getyVertex(),bitString)){
+                        graphNode.getEdgeList().get(m).getyVertex(),partNode.getBitString())){
                     //increment the number of edges cut
                     numEdgesCut++;
 
@@ -657,11 +808,11 @@ public class MinCutAlgorithmFiveClass {
 
             int s1counter = 0;
             int s2counter = 0;
-            for(int j = 1; j<bitString.size(); j++){
+            for(int j = 1; j<partNode.getBitString().size(); j++){
 
-                if(bitString.get(j)==false){
+                if(partNode.getBitString().get(j)==false){
                     s1counter++;
-                }else if(bitString.get(j)==true){
+                }else if(partNode.getBitString().get(j)==true){
                     s2counter++;
                 }
             }
@@ -680,8 +831,8 @@ public class MinCutAlgorithmFiveClass {
 
             }
 
-            Graph graph1 = new Graph(graphNode.getEdgeList(),graphNode.getSize());
-            graph1.buildAdjList(bitString);
+            Graph graph1 = new Graph(graphNode.getEdgeList(),graphNode.getSize()+1);
+            graph1.buildAdjList(partNode.getBitString());
             //We get the amount of graphs that are in existance after the cuts have been made
             int graphCount = graph1.graphCount();
             double penalty = ((double)penaltyScalar);
@@ -752,6 +903,17 @@ public class MinCutAlgorithmFiveClass {
     }
 
 
+    private boolean termCondition(int evalCounter) {
+        if(termNum==0){
+            return false;
+
+        }else{
+            if(evalCounter==termNum){
+                return true;
+            }
+            return false;
+        }
+    }
 
 }
 

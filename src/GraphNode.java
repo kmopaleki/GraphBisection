@@ -19,11 +19,12 @@ public class GraphNode {
 
     public GraphNode(int size,Random random) {
         this.size = size;
+        this.numEdges = 4;
+        this.random = random;
         this.edgeList = createEdgeList(size);
         this.beenParentSelected = false;
         this.beenSelectedSon=false;
-        this.numEdges = 40;
-        this.random = random;
+
     }
 
     public GraphNode(int size,ArrayList<Edge> edgeList) {
