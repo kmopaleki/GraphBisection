@@ -36,8 +36,8 @@ public class Graph {
 
     public void buildAdjList(ArrayList<Boolean> bitString){
 //        build each node
-        adjList.add(new Node(-99999));
-        for(int i = 1; i<graphSize; i++){
+//        adjList.add(new Node(-99999));
+        for(int i = 0; i<graphSize; i++){
             Node node = new Node(i);
             adjList.add(node);
         }

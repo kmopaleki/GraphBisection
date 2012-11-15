@@ -32,6 +32,7 @@ public class EaTester {
          String recombAlg = null;
          String logFile = null;
          String solutionFile = null;
+         String graphSolutionFile = null;
          int penaltyScalar=0;
          int bitFlipProb=0;
          int numChildren=0;
@@ -93,6 +94,8 @@ public class EaTester {
 
             }else if(counter == 23){
                 termNum = Integer.parseInt(s.next());
+            }else if(counter == 24){
+                graphSolutionFile = s.next();
             }
             
             counter++;
@@ -105,7 +108,7 @@ public class EaTester {
         MinCutAlgorithmFiveClass minCutAlgorithmFiveClass = new MinCutAlgorithmFiveClass(populationSize,kSurvival,
                 randomSeed,numParents,kParent,graphSample,partitionSample,fitnessFunction,survivalAlg,
                 survivalStrat,selectionAlg,mutationAlg,recombAlg,logFile,solutionFile,penaltyScalar,bitFlipProb,
-                numChildren,graphSize,nPoint,nCrossNum,numberOfEvals,numberOfRuns,termNum);
+                numChildren,graphSize,nPoint,nCrossNum,numberOfEvals,numberOfRuns,termNum,graphSolutionFile);
 
 
         minCutAlgorithmFiveClass.COEA();

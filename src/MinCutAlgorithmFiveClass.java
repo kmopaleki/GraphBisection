@@ -25,6 +25,7 @@ public class MinCutAlgorithmFiveClass {
     private String recombAlg;
     private String logFile;
     private String solutionFile;
+    private String graphSolutionFile;
     private int penaltyScalar;
     private int bitFlipProb;
     private int numChildren;
@@ -50,7 +51,7 @@ public class MinCutAlgorithmFiveClass {
                                     int bitFlipProb, int numChildren,
                                     int graphSize, int nPoint,
                                     int nCrossNum, int numberOfEvals,
-                                    int numberOfRuns, int termNum) {
+                                    int numberOfRuns, int termNum,String graphSolutionFile) {
         this.populationSize = populationSize;
         this.kSurvival = kSurvival;
         this.randomValue = new Random(randomSeed);
@@ -75,18 +76,23 @@ public class MinCutAlgorithmFiveClass {
         this.numberOfEvals = numberOfEvals;
         this.numberOfRuns = numberOfRuns;
         this.termNum = termNum;
+        this.graphSolutionFile = graphSolutionFile;
     }
 
     /**
      * The Haus algorithm
      */
     public void COEA() throws IOException {
-        GraphNode bestGraph;
-        PartNode bestPartition;
+        GraphNode bestGraph = null;
+        PartNode bestPartition = null;
+        ArrayList<GraphNode> bestSolutionGraphList = new ArrayList<GraphNode>();
+        ArrayList<PartNode> bestSolutionList = new ArrayList<PartNode>();
         FileWriter theLogFile = new FileWriter(logFile,true);
         FileWriter theSolutionFile = new FileWriter(solutionFile,true);
+        FileWriter theGraphSolutionFile = new FileWriter(graphSolutionFile,true);
         BufferedWriter outLog = new BufferedWriter(theLogFile);
         BufferedWriter solutionLog = new BufferedWriter(theSolutionFile);
+        BufferedWriter graphSolutionLog = new BufferedWriter(theGraphSolutionFile);
 
         outLog.write("Result Log" + "\r\n");
         outLog.write("Number of Runs: " + numberOfRuns + " Number of Evaluations per Run: "
@@ -103,16 +109,22 @@ public class MinCutAlgorithmFiveClass {
         outLog.write("Reproduction Alg: " + recombAlg + "\r\n");
         outLog.write("Surivivor Selection Alg: " + survivalAlg + "\r\n");
         outLog.write("Fitness Function: " + fitnessFunction + "\r\n");
+        outLog.write("Graph Sample Size: " + graphSample + "\r\n");
+        outLog.write("Partition Sample: " + partitionSample + "\r\n");
         outLog.write("Result Log"+"\r\n");
 
-        double localbest = 0.000;
+        double localBest = 0.000;
         double localAverage = 0.000;
+        double localGraphAverage = 0.000;
+        double localGraphBest = 0.000;
+
+        int childCounter = 0;
 
         for(int i = 0; i<numberOfRuns; i++){
             //INITIALIZE THE POPULATION
             ArrayList<PartNode> partitionPopulation = new ArrayList<PartNode>();
             ArrayList<GraphNode> graphPopulation = new ArrayList<GraphNode>();
-
+            childCounter = populationSize;
             for(int j = 0; j<populationSize; j++){
                 partitionPopulation.add(new PartNode(getBitStrings(graphSize)));
                 graphPopulation.add(new GraphNode(graphSize,randomValue));
@@ -127,6 +139,8 @@ public class MinCutAlgorithmFiveClass {
             int termCounter = 0;
             double prevLocalBest = 0.0000;
             double currentLocalBest;
+            double prevLocalBestGraph = 0.0000;
+            double currentLocalBestGraph;
             outLog.write("Run #: " + (i+1)+"\r\n");
             while(evalCounter<numberOfEvals&&!termCondition(termCounter)){
                 System.out.println("Run #" + i + "Eval # " + evalCounter);
@@ -173,7 +187,21 @@ public class MinCutAlgorithmFiveClass {
                     graphPopulation.addAll(graph_spawning_pool);
                     partitionPopulation.addAll(partition_spawning_pool);
                 }else if(survivalStrat.equals("Comma")){
+                    graphPopulation.clear();
+                    graphPopulation.addAll(graph_spawning_pool);
+                    partitionPopulation.clear();
+                    partitionPopulation.addAll(partition_spawning_pool);
 
+                    //now we need to make sure that the population size is still N
+                    //so we duplicate children to fill it up.
+                    while(partitionPopulation.size()<populationSize){
+                        PartNode newNode = partitionPopulation.get(randomValue.nextInt(partitionPopulation.size()));
+                        partitionPopulation.add(newNode);
+                    }
+                    while(graphPopulation.size()<populationSize){
+                        GraphNode newNode = graphPopulation.get(randomValue.nextInt(graphPopulation.size()));
+                        graphPopulation.add(newNode);
+                    }
                 }
 
                 if(survivalAlg.equals("Tournament")){
@@ -187,15 +215,46 @@ public class MinCutAlgorithmFiveClass {
                 }
 
                 if(evalCounter%numChildren==0){
+                    localBest = getBestFitness(partitionPopulation);
+                    localAverage = getAverageFitness(partitionPopulation);
+                    localGraphBest = getBestGraphFitness(graphPopulation);
+                    localGraphAverage = getGraphAverageFitness(graphPopulation);
+                    outLog.write(childCounter + "\t" + (-1)*localAverage + "\t" + (-1)*localBest + "\t"+ (-1)*localGraphAverage +
+                            "\t"+ (-1)*localGraphBest + "\r\n");
+                    childCounter = childCounter + numChildren;
 
                 }
+                currentLocalBest = getBestFitness(partitionPopulation);
+                currentLocalBestGraph = getBestGraphFitness(graphPopulation);
+                if(currentLocalBest==prevLocalBest){
+                    termCounter++;
+                }else if(currentLocalBest!=prevLocalBest||currentLocalBestGraph!=prevLocalBestGraph){
+                    prevLocalBest = currentLocalBest;
+                    prevLocalBestGraph = currentLocalBestGraph;
+                    termCounter = 0;
+                }
+
+
 
                 evalCounter++;
             }
+
+            bestSolutionList.add(getBestSolution(partitionPopulation));
+            bestSolutionGraphList.add(getBestGraphSolution(graphPopulation));
+        }
+
+        solutionLog.write(getBestSolutionBitString(getBestSolution(bestSolutionList)));
+        bestGraph = getBestGraphSolution(bestSolutionGraphList);
+        graphSolutionLog.write(bestGraph.getSize() + "\r\n");
+        graphSolutionLog.write(bestGraph.getEdgeList().size() + "\r\n");
+        for(int m = 0; m<bestGraph.getEdgeList().size(); m++){
+            graphSolutionLog.write(bestGraph.getEdgeList().get(m).getxVertex() + "\t"
+            + bestGraph.getEdgeList().get(m).getyVertex() + "\r\n");
         }
 
         outLog.close();
         solutionLog.close();
+        graphSolutionLog.close();
     }
 
     /**
@@ -478,7 +537,7 @@ public class MinCutAlgorithmFiveClass {
         while(nextGen.size()<populationSize){
             int save_index = 0;
             for(int i = 0; i<population.size(); i++){
-                if(population.get(save_index).getFitnessValue()<population.get(i).getFitnessValue()){
+                if(population.get(i).getFitnessValue()<population.get(save_index).getFitnessValue()){
                     save_index = i;
                 }
             }
@@ -493,13 +552,12 @@ public class MinCutAlgorithmFiveClass {
         /**
          * For the Graphs
          */
-
         ArrayList<GraphNode> nextGraphGen = new ArrayList<GraphNode>();
         //find best index
-        while(nextGen.size()<populationSize){
+        while(nextGraphGen.size()<populationSize){
             int save_index = 0;
             for(int i = 0; i<populationGraph.size(); i++){
-                if(populationGraph.get(save_index).getFitnessValue()<populationGraph.get(i).getFitnessValue()){
+                if(populationGraph.get(i).getFitnessValue()<populationGraph.get(save_index).getFitnessValue()){
                     save_index = i;
                 }
             }
@@ -706,7 +764,7 @@ public class MinCutAlgorithmFiveClass {
                     }
 
                     graphs_spawning_pool.get(i).getEdgeList().remove(j);
-                    graphs_spawning_pool.get(i).getEdgeList().add(index,new Edge(x,y));
+                    graphs_spawning_pool.get(i).getEdgeList().add(index, new Edge(x, y));
                 }
             }
         }
@@ -913,6 +971,82 @@ public class MinCutAlgorithmFiveClass {
             }
             return false;
         }
+    }
+
+    private double getAverageFitness(ArrayList<PartNode> population) {
+        double fitnessValueSum = 0.00000;
+
+        for(int i = 0; i<population.size(); i++){
+            fitnessValueSum = fitnessValueSum + population.get(i).getFitnessValue();
+        }
+
+        return fitnessValueSum/population.size();
+    }
+
+    private double getGraphAverageFitness(ArrayList<GraphNode> graphPopulation){
+        double fitnessValueSum = 0.00000;
+        for(int i =0; i<graphPopulation.size(); i++){
+            fitnessValueSum = fitnessValueSum + graphPopulation.get(i).getFitnessValue();
+        }
+
+        return fitnessValueSum/graphPopulation.size();
+    }
+
+    private double getBestFitness(ArrayList<PartNode> population) {
+        double bestFitness = population.get(0).getFitnessValue();
+        for(int i = 1; i<population.size(); i++){
+            if(population.get(i).getFitnessValue()<bestFitness){
+                bestFitness = population.get(i).getFitnessValue();
+            }
+        }
+        return bestFitness;
+    }
+
+    private double getBestGraphFitness(ArrayList<GraphNode> population){
+        double bestFitness = population.get(0).getFitnessValue();
+        for(int i = 1; i<population.size(); i++){
+            if(population.get(i).getFitnessValue()<bestFitness){
+                bestFitness = population.get(i).getFitnessValue();
+            }
+        }
+        return bestFitness;
+    }
+
+    private PartNode getBestSolution(ArrayList<PartNode> bestSolutionArrayList) {
+        int current_best = 0;
+        for(int i = 0; i<bestSolutionArrayList.size(); i++){
+            if(bestSolutionArrayList.get(current_best).getFitnessValue()>bestSolutionArrayList.get(i).getFitnessValue()){
+                current_best = i;
+            }
+        }
+
+        return bestSolutionArrayList.get(current_best);
+
+    }
+
+    private GraphNode getBestGraphSolution(ArrayList<GraphNode> bestSolutionArrayList) {
+        int current_best = 0;
+        for(int i = 0; i<bestSolutionArrayList.size(); i++){
+            if(bestSolutionArrayList.get(current_best).getFitnessValue()>bestSolutionArrayList.get(i).getFitnessValue()){
+                current_best = i;
+            }
+        }
+
+        return bestSolutionArrayList.get(current_best);
+
+    }
+
+    private String getBestSolutionBitString(PartNode bestSolution){
+        String result = "";
+
+        for(int i = 0; i<bestSolution.getBitString().size(); i++){
+            if(bestSolution.getBitString().get(i)){
+                result= result + "1";
+            }else if(!bestSolution.getBitString().get(i)){
+                result = result + "0";
+            }
+        }
+        return result;
     }
 
 }
